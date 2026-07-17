@@ -21,7 +21,7 @@ Result<PathGuard> PathGuard::create(const QString& rootPath,
     return tl::unexpected(makeError(ErrorCode::ConfigInvalid,
                                     QStringLiteral("path size cap is zero")));
   }
-  return PathGuard(QDir::cleanPath(canonical), maxFileBytes);
+  return PathGuard(canonical, maxFileBytes);
 }
 
 Result<QString> PathGuard::resolve(const QString& relativePath,

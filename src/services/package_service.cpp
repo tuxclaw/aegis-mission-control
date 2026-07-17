@@ -40,6 +40,11 @@ QFuture<Result<QVector<dto::PackageDto>>> PackageService::list() {
                             : QStringLiteral("rpm");
     QVector<dto::PackageDto> packages;
     const auto lines = output.split('\n');
+    constexpr int kMaxLines = 100000;
+    if (lines.size() > kMaxLines) {
+      return tl::unexpected(makeError(ErrorCode::ResponseTooLarge,
+                                      QStringLiteral("package output line count exceeded")));
+    }
     packages.reserve(lines.size());
     for (const auto& rawLine : lines) {
       const auto line = QString::fromUtf8(rawLine).trimmed();

@@ -43,14 +43,14 @@ Result<CreativeRequest> CreativeRequest::fromJson(const QJsonObject& object) {
       object, QStringLiteral("prompt"), 1, 8000, true);
   if (!prompt) return tl::unexpected(prompt.error());
   const auto rawTemperature = json::requiredNumber(
-      object, QStringLiteral("temperature"), -1000000.0, 1000000.0);
+      object, QStringLiteral("temperature"), 0.0, 2.0);
   if (!rawTemperature) return tl::unexpected(rawTemperature.error());
   const auto rawMaxTokens = json::requiredInt(
-      object, QStringLiteral("maxTokens"), -1000000, 1000000);
+      object, QStringLiteral("maxTokens"), 1, 8192);
   if (!rawMaxTokens) return tl::unexpected(rawMaxTokens.error());
   return CreativeRequest{backend.value(), model.value(), prompt.value(),
-                         qBound(0.0, rawTemperature.value(), 2.0),
-                         qBound(1, rawMaxTokens.value(), 8192)};
+                         rawTemperature.value(),
+                         rawMaxTokens.value()};
 }
 
 QJsonObject CreativeRequest::toJson() const {

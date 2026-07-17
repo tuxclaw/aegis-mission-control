@@ -2,6 +2,10 @@
 
 #include "core/async.h"
 
+#if defined(AEGIS_HAS_LIBGIT2)
+#include <git2.h>
+#endif
+
 namespace aegis {
 
 AppContext::AppContext()
@@ -54,7 +58,11 @@ AppContext::AppContext()
   vitalsService_->start(std::chrono::milliseconds(interval ? interval.value() : 1000));
 }
 
-AppContext::~AppContext() = default;
+AppContext::~AppContext() {
+#if defined(AEGIS_HAS_LIBGIT2)
+  git_libgit2_shutdown();
+#endif
+}
 
 ConfigService* AppContext::configService() const { return configService_.get(); }
 
