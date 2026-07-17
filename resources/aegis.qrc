@@ -1,0 +1,9 @@
+<RCC>
+  <qresource prefix="/">
+    <file alias="qml/Main.qml">../qml/Main.qml</file>
+    <file alias="qtquickcontrols2.conf">qtquickcontrols2.conf</file>
+    <file alias="fonts/Inter-Variable.ttf">fonts/Inter-Variable.ttf</file>
+    <file alias="fonts/JetBrainsMono-Variable.ttf">fonts/JetBrainsMono-Variable.ttf</file>
+    <file alias="icons/aegis.svg">icons/aegis.svg</file>
+  </qresource>
+</RCC>
