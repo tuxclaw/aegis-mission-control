@@ -26,6 +26,7 @@ int main(int argc, char* argv[]) {
   aegis::QmlRegistration::registerTypes();
 
   QQmlApplicationEngine engine;
+  engine.addImportPath(QStringLiteral("qrc:/qt/qml"));
   aegis::QmlRegistration::registerContext(&engine, &appContext);
   const QUrl mainUrl(QStringLiteral("qrc:/qml/Main.qml"));
   QObject::connect(
