@@ -1,5 +1,20 @@
 # Build History
 
+## [2026-07-17] Vitals and Agent Status Remediation
+**Agent:** Helen 🦸‍♀️
+**Branch:** `main` (explicit task requirement)
+
+- Replaced zero-size-sensitive `/proc` EOF checks so CPU, memory, and network
+  samples reach the controller; added opt-in `aegis.vitals` diagnostics.
+- Mapped structured agent statuses, treated status-less configured inventory as
+  idle, and exposed cached active/total counts directly to QML.
+- Added live vitals/controller and CLI schema regression coverage.
+- Verified a warnings-as-errors GUI build, all 10 QtTest suites, QML lint
+  execution, and an offscreen runtime trace with non-zero CPU and real memory,
+  disk, and network samples.
+
+**Status:** Complete
+
 ## [2026-07-17] Frontend Foundation
 **Agent:** Dash ⚡
 **Branch:** `andy/foundation-frontend`

@@ -15,6 +15,10 @@ class OpenClawCliParseTest : public QObject {
                             {"identitySource", "profile"},
                             {"isDefault", false},
                             {"model", "openai/gpt-example"},
+                            {"status", "active"},
+                            {"statusDetail", "running a session"},
+                            {"lastSeen", "2026-07-17T08:00:00.000Z"},
+                            {"activeSessions", 2},
                             {"workspace", "/tmp/workspace"}};
     auto agents = aegis::OpenClawCli::parseAgents(
         QJsonDocument(QJsonObject{{"agents", QJsonArray{agent}}})
@@ -22,7 +26,21 @@ class OpenClawCliParseTest : public QObject {
     QVERIFY(agents);
     QCOMPARE(agents->first().id, QString("helen"));
     QCOMPARE(agents->first().displayName, QString("Helen"));
-    QCOMPARE(agents->first().status, aegis::dto::AgentStatus::Unknown);
+    QCOMPARE(agents->first().status, aegis::dto::AgentStatus::Active);
+    QCOMPARE(agents->first().statusDetail, QString("running a session"));
+    QCOMPARE(agents->first().activeSessions, 2);
+
+    auto configuredAgent = agent;
+    configuredAgent.remove(QStringLiteral("status"));
+    configuredAgent.remove(QStringLiteral("statusDetail"));
+    configuredAgent.remove(QStringLiteral("lastSeen"));
+    configuredAgent.remove(QStringLiteral("activeSessions"));
+    auto configuredAgents = aegis::OpenClawCli::parseAgents(
+        QJsonDocument(QJsonArray{configuredAgent})
+            .toJson(QJsonDocument::Compact));
+    QVERIFY(configuredAgents);
+    QCOMPARE(configuredAgents->first().status,
+             aegis::dto::AgentStatus::Idle);
 
     const QJsonObject job{
         {"agentId", "helen"},

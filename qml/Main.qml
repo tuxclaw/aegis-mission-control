@@ -131,12 +131,6 @@ ApplicationWindow {
         }
     }
 
-    ListView {
-        id: agentCountView
-        visible: false
-        model: agents.agents
-    }
-
     RadarGrid {
         anchors.fill: parent
     }
@@ -376,7 +370,7 @@ ApplicationWindow {
         connectionState: root.connectionKey()
         connectionLabel: root.connectionLabel()
         activeAgents: agents.activeCount
-        totalAgents: agentCountView.count
+        totalAgents: agents.totalCount
         cpuPercent: vitals.cpuPct
         memoryPercent: vitals.memPct
         lastSync: app.lastSyncTime ? Qt.formatTime(app.lastSyncTime, "HH:mm:ss") : qsTr("Never")

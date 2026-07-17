@@ -14,6 +14,7 @@
 
 #include "config/config_service.h"
 #include "core/async.h"
+#include "core/logging.h"
 
 namespace aegis {
 namespace {
@@ -31,8 +32,8 @@ Result<QVector<CpuCounter>> readCpuCounters() {
   }
   QVector<CpuCounter> counters;
   QTextStream stream(&file);
-  while (!stream.atEnd()) {
-    const auto line = stream.readLine();
+  QString line;
+  while (stream.readLineInto(&line)) {
     if (!line.startsWith(QStringLiteral("cpu"))) break;
     const auto fields = line.simplified().split(QLatin1Char(' '));
     if (fields.size() < 8) {
@@ -100,8 +101,9 @@ Result<dto::MemVitals> readMemory() {
   }
   QHash<QString, quint64> values;
   QTextStream stream(&file);
-  while (!stream.atEnd()) {
-    const auto fields = stream.readLine().simplified().split(QLatin1Char(' '));
+  QString line;
+  while (stream.readLineInto(&line)) {
+    const auto fields = line.simplified().split(QLatin1Char(' '));
     if (fields.size() >= 2) {
       bool ok = false;
       const auto value = fields.at(1).toULongLong(&ok);
@@ -130,8 +132,8 @@ Result<QHash<QString, QPair<quint64, quint64>>> readNetworkCounters() {
   QTextStream stream(&file);
   stream.readLine();
   stream.readLine();
-  while (!stream.atEnd()) {
-    const auto line = stream.readLine();
+  QString line;
+  while (stream.readLineInto(&line)) {
     const auto colon = line.indexOf(QLatin1Char(':'));
     if (colon <= 0) continue;
     const auto name = line.left(colon).trimmed();
@@ -179,8 +181,12 @@ void VitalsService::start(std::chrono::milliseconds interval) {
 void VitalsService::stop() { timer_.stop(); }
 
 void VitalsService::sampleNow() {
-  if (sampling_) return;
+  if (sampling_) {
+    qCDebug(aegisVitalsLog) << "Skipping overlapping vitals sample";
+    return;
+  }
   sampling_ = true;
+  qCDebug(aegisVitalsLog) << "Starting vitals sample";
   auto future = async::run([state = state_]() -> Result<dto::VitalsDto> {
     const auto cpu = readCpuCounters();
     if (!cpu) return tl::unexpected(cpu.error());
@@ -254,8 +260,20 @@ void VitalsService::sampleNow() {
             sampling_ = false;
             const auto result = watcher->result();
             watcher->deleteLater();
-            if (result) emit sampled(result.value());
-            else emit failed(result.error());
+            if (result) {
+              const auto& sample = result.value();
+              qCDebug(aegisVitalsLog)
+                  << "Vitals sample complete"
+                  << "cpu" << sample.cpu.utilizationPct
+                  << "memory" << sample.mem.usedBytes << "/"
+                  << sample.mem.totalBytes << "disks" << sample.disks.size()
+                  << "networks" << sample.nets.size();
+              emit sampled(sample);
+            } else {
+              qCWarning(aegisVitalsLog)
+                  << "Vitals sample failed:" << result.error().debugContext;
+              emit failed(result.error());
+            }
           });
   watcher->setFuture(std::move(future));
 }
