@@ -2,10 +2,6 @@
 
 #include "core/async.h"
 
-#if defined(AEGIS_HAS_LIBGIT2)
-#include <git2.h>
-#endif
-
 namespace aegis {
 
 AppContext::AppContext()
@@ -59,9 +55,7 @@ AppContext::AppContext()
 }
 
 AppContext::~AppContext() {
-#if defined(AEGIS_HAS_LIBGIT2)
-  git_libgit2_shutdown();
-#endif
+  GitService::shutdownLibrary();
 }
 
 ConfigService* AppContext::configService() const { return configService_.get(); }

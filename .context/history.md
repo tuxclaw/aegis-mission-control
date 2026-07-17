@@ -12,6 +12,18 @@
 
 **Status:** Complete
 
+## [2026-07-17] Security Review Warnings and Suggestions
+**Agent:** Dash ⚡
+**Branch:** `main`
+
+- Removed redundant canonical-root cleanup and made creative request ranges reject invalid values.
+- Added incremental Ollama NDJSON delivery through the managed HTTP client's `readyRead` path, including partial-line buffering and final unterminated-frame handling.
+- Paired successful process-wide libgit2 initialization with guarded shutdown and capped package output at 100,000 lines.
+- Added a strict controller meta-object denylist gate plus creative range and incremental-streaming regression coverage.
+- Verified a clean warnings-as-errors core build and all 8 QtTest executables from a detached `main` worktree.
+
+**Status:** Complete
+
 ## [2026-07-17] Controller-Backed Mission Control Views
 **Agent:** Dash ⚡
 **Branch:** `andy/views`

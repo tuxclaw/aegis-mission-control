@@ -34,6 +34,7 @@ class CreativeService : public QObject {
  private:
   void generateOllama(const QString& requestId,
                       const dto::CreativeRequest& request);
+  bool processOllamaLine(const QString& requestId, const QByteArray& line);
   void finishCancelled(const QString& requestId);
 
   ConfigService* config_;

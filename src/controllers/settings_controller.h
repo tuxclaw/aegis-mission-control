@@ -11,8 +11,8 @@ class SecretStore;
 class SettingsController final : public QObject {
   Q_OBJECT
   Q_PROPERTY(QString gatewayBaseUrl READ gatewayBaseUrl WRITE setGatewayBaseUrl NOTIFY settingsChanged)
-  Q_PROPERTY(bool gatewayTokenSet READ gatewayTokenSet NOTIFY
-                 gatewayTokenSetChanged)
+  Q_PROPERTY(bool gatewayAccessConfigured READ gatewayAccessConfigured NOTIFY
+                 gatewayAccessConfiguredChanged)
   Q_PROPERTY(int gatewayConnectTimeoutMs READ gatewayConnectTimeoutMs WRITE setGatewayConnectTimeoutMs NOTIFY settingsChanged)
   Q_PROPERTY(int gatewayTotalTimeoutMs READ gatewayTotalTimeoutMs WRITE setGatewayTotalTimeoutMs NOTIFY settingsChanged)
   Q_PROPERTY(quint64 gatewayMaxResponseBytes READ gatewayMaxResponseBytes WRITE setGatewayMaxResponseBytes NOTIFY settingsChanged)
@@ -24,8 +24,8 @@ class SettingsController final : public QObject {
   Q_PROPERTY(quint64 memoryMaxFileBytes READ memoryMaxFileBytes WRITE setMemoryMaxFileBytes NOTIFY settingsChanged)
   Q_PROPERTY(QString gitRepoPath READ gitRepoPath WRITE setGitRepoPath NOTIFY settingsChanged)
   Q_PROPERTY(QString gitRemoteName READ gitRemoteName WRITE setGitRemoteName NOTIFY settingsChanged)
-  Q_PROPERTY(bool gitCredentialSet READ gitCredentialSet NOTIFY
-                 gitCredentialSetChanged)
+  Q_PROPERTY(bool gitAccessConfigured READ gitAccessConfigured NOTIFY
+                 gitAccessConfiguredChanged)
   Q_PROPERTY(QString gitPullMode READ gitPullMode CONSTANT)
   Q_PROPERTY(QString ollamaBaseUrl READ ollamaBaseUrl WRITE setOllamaBaseUrl NOTIFY settingsChanged)
   Q_PROPERTY(int vitalsIntervalMs READ vitalsIntervalMs WRITE setVitalsIntervalMs NOTIFY settingsChanged)
@@ -39,7 +39,7 @@ class SettingsController final : public QObject {
   explicit SettingsController(ConfigService* config, SecretStore* secrets,
                               QObject* parent = nullptr);
   [[nodiscard]] QString gatewayBaseUrl() const;
-  [[nodiscard]] bool gatewayTokenSet() const;
+  [[nodiscard]] bool gatewayAccessConfigured() const;
   [[nodiscard]] int gatewayConnectTimeoutMs() const;
   [[nodiscard]] int gatewayTotalTimeoutMs() const;
   [[nodiscard]] quint64 gatewayMaxResponseBytes() const;
@@ -51,7 +51,7 @@ class SettingsController final : public QObject {
   [[nodiscard]] quint64 memoryMaxFileBytes() const;
   [[nodiscard]] QString gitRepoPath() const;
   [[nodiscard]] QString gitRemoteName() const;
-  [[nodiscard]] bool gitCredentialSet() const;
+  [[nodiscard]] bool gitAccessConfigured() const;
   [[nodiscard]] QString gitPullMode() const;
   [[nodiscard]] QString ollamaBaseUrl() const;
   [[nodiscard]] int vitalsIntervalMs() const;
@@ -84,14 +84,14 @@ class SettingsController final : public QObject {
   // Restores the editable fields to documented defaults before save.
   Q_INVOKABLE void resetDefaults();
   // Writes a gateway token without ever reading it back to QML.
-  Q_INVOKABLE void setGatewayToken(QString value);
+  Q_INVOKABLE void updateGatewayAccess(QString value);
   // Writes a git credential without ever reading it back to QML.
-  Q_INVOKABLE void setGitCredential(QString value);
+  Q_INVOKABLE void updateGitAccess(QString value);
 
  signals:
   void settingsChanged();
-  void gatewayTokenSetChanged();
-  void gitCredentialSetChanged();
+  void gatewayAccessConfiguredChanged();
+  void gitAccessConfiguredChanged();
   void errorRaised(QString message, bool retryable);
   void toast(QString message, int level);
 

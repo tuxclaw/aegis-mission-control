@@ -1,6 +1,7 @@
 #include "services/git_service.h"
 
 #include <algorithm>
+#include <atomic>
 
 #include <QDir>
 #include <QFileInfo>
@@ -53,6 +54,8 @@ Result<void> validatePaths(const QStringList& paths) {
 
 #if defined(AEGIS_HAS_LIBGIT2)
 
+std::atomic_bool libgit2Initialized{false};
+
 struct RepositoryDeleter {
   void operator()(git_repository* repository) const {
     git_repository_free(repository);
@@ -62,7 +65,11 @@ struct RepositoryDeleter {
 using Repository = std::unique_ptr<git_repository, RepositoryDeleter>;
 
 Result<Repository> openRepository(const QString& path) {
-  static const auto initialized = git_libgit2_init();
+  static const auto initialized = [] {
+    const auto result = git_libgit2_init();
+    if (result >= 0) libgit2Initialized.store(true);
+    return result;
+  }();
   if (initialized < 0) {
     return tl::unexpected(makeError(ErrorCode::GitOpenFailed,
                                     QStringLiteral("libgit2 initialization failed")));
@@ -228,6 +235,12 @@ Result<T> libgitUnavailable() {
 GitService::GitService(ConfigService* config, SecretStore* secrets,
                        QObject* parent)
     : QObject(parent), config_(config), secrets_(secrets) {}
+
+void GitService::shutdownLibrary() {
+#if defined(AEGIS_HAS_LIBGIT2)
+  if (libgit2Initialized.exchange(false)) git_libgit2_shutdown();
+#endif
+}
 
 QFuture<Result<dto::GitStatusDto>> GitService::status() {
   const auto path = validatedRepoPath(config_);

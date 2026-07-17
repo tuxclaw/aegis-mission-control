@@ -48,12 +48,14 @@ class RequestOperation : public std::enable_shared_from_this<RequestOperation> {
  public:
   RequestOperation(QNetworkAccessManager* manager, HttpMethod method,
                    QNetworkRequest request, QByteArray body,
-                   HttpRequestOptions options)
+                   HttpRequestOptions options,
+                   HttpChunkHandler chunkHandler = {})
       : manager_(manager),
         method_(method),
         request_(std::move(request)),
         body_(std::move(body)),
         options_(options),
+        chunkHandler_(std::move(chunkHandler)),
         promise_(std::make_unique<QPromise<ByteResult>>()) {
     promise_->start();
   }
@@ -73,6 +75,7 @@ class RequestOperation : public std::enable_shared_from_this<RequestOperation> {
 
     ++attemptNumber_;
     buffer_.clear();
+    receivedBytes_ = 0;
     forcedError_.reset();
 
     switch (method_) {
@@ -130,15 +133,19 @@ class RequestOperation : public std::enable_shared_from_this<RequestOperation> {
       return;
     }
     const auto chunk = reply_->readAll();
-    const auto currentSize = static_cast<quint64>(buffer_.size());
     const auto chunkSize = static_cast<quint64>(chunk.size());
     if (chunkSize > options_.maxResponseBytes ||
-        currentSize > options_.maxResponseBytes - chunkSize) {
+        receivedBytes_ > options_.maxResponseBytes - chunkSize) {
       abortWith(makeError(ErrorCode::ResponseTooLarge,
                           QStringLiteral("streamed response exceeded cap")));
       return;
     }
-    buffer_.append(chunk);
+    receivedBytes_ += chunkSize;
+    if (chunkHandler_) {
+      chunkHandler_(chunk);
+    } else {
+      buffer_.append(chunk);
+    }
   }
 
   void abortWith(AegisError error) {
@@ -174,6 +181,7 @@ class RequestOperation : public std::enable_shared_from_this<RequestOperation> {
 
     const auto retryableStatus = status >= 500 && status <= 599;
     const auto canRetry = !result && attemptNumber_ <= options_.maxRetries &&
+                          (!chunkHandler_ || receivedBytes_ == 0) &&
                           (result.error().code == ErrorCode::NetworkTimeout ||
                            result.error().code == ErrorCode::NetworkUnreachable ||
                            retryableStatus);
@@ -208,11 +216,13 @@ class RequestOperation : public std::enable_shared_from_this<RequestOperation> {
   QNetworkRequest request_;
   QByteArray body_;
   HttpRequestOptions options_;
+  HttpChunkHandler chunkHandler_;
   std::unique_ptr<QPromise<ByteResult>> promise_;
   QPointer<QNetworkReply> reply_;
   std::unique_ptr<QTimer> connectTimer_;
   std::unique_ptr<QTimer> totalTimer_;
   QByteArray buffer_;
+  quint64 receivedBytes_ = 0;
   std::optional<AegisError> forcedError_;
   int attemptNumber_ = 0;
   bool completed_ = false;
@@ -246,6 +256,24 @@ QFuture<Result<QByteArray>> HttpClient::request(
   }
   auto operation = std::make_shared<RequestOperation>(
       &manager_, method, request, body, options);
+  auto future = operation->future();
+  operation->start();
+  return future;
+}
+
+QFuture<Result<QByteArray>> HttpClient::requestStreaming(
+    HttpMethod method, const QNetworkRequest& request, const QByteArray& body,
+    HttpChunkHandler chunkHandler, const HttpRequestOptions& options) {
+  if (!request.url().isValid() || request.url().scheme().isEmpty()) {
+    return readyError(makeError(ErrorCode::ValidationFailed,
+                                QStringLiteral("invalid request URL")));
+  }
+  if (!validOptions(options) || !chunkHandler) {
+    return readyError(makeError(ErrorCode::ConfigInvalid,
+                                QStringLiteral("invalid HTTP streaming options")));
+  }
+  auto operation = std::make_shared<RequestOperation>(
+      &manager_, method, request, body, options, std::move(chunkHandler));
   auto future = operation->future();
   operation->start();
   return future;

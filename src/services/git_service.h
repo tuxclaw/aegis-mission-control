@@ -19,6 +19,8 @@ class GitService : public QObject {
   // Creates a libgit2 repository service from validated configuration.
   explicit GitService(ConfigService* config, SecretStore* secrets,
                       QObject* parent = nullptr);
+  // Releases the process-wide libgit2 initialization when it succeeded.
+  static void shutdownLibrary();
   // Returns current worktree, branch, divergence, and file status.
   [[nodiscard]] QFuture<Result<dto::GitStatusDto>> status();
   // Stages exactly the validated repository-relative paths.

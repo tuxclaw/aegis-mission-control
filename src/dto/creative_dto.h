@@ -15,7 +15,7 @@ struct CreativeRequest {
   double temperature = 0.7;
   int maxTokens = 1024;
 
-  // Parses, validates, and applies the specified numeric clamps.
+  // Parses and validates the documented numeric ranges.
   static Result<CreativeRequest> fromJson(const QJsonObject& object);
 
   // Serializes this request into its stable JSON representation.

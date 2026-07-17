@@ -4,7 +4,10 @@
 #include <QDir>
 #include <QJsonDocument>
 #include <QNetworkRequest>
+#include <QPointer>
 #include <QUuid>
+
+#include <memory>
 
 #include "config/config_service.h"
 #include "core/http_client.h"
@@ -100,9 +103,10 @@ void CreativeService::generateOllama(
   HttpRequestOptions options;
   options.totalTimeoutMs = 300000;
   options.maxResponseBytes = 16ULL * 1024ULL * 1024ULL;
+  auto lineBuffer = std::make_shared<QByteArray>();
   auto* watcher = new QFutureWatcher<Result<QByteArray>>(this);
   connect(watcher, &QFutureWatcher<Result<QByteArray>>::finished, this,
-          [this, watcher, requestId] {
+          [this, watcher, requestId, lineBuffer] {
             const auto response = watcher->result();
             watcher->deleteLater();
             if (!results_.contains(requestId)) return;
@@ -111,32 +115,9 @@ void CreativeService::generateOllama(
               emit failed(requestId, response.error());
               return;
             }
-            auto& result = results_[requestId];
-            for (const auto& line : response->split('\n')) {
-              if (line.trimmed().isEmpty()) continue;
-              QJsonParseError parseError;
-              const auto document = QJsonDocument::fromJson(line, &parseError);
-              if (parseError.error != QJsonParseError::NoError ||
-                  !document.isObject()) {
-                results_.remove(requestId);
-                emit failed(requestId, makeError(
-                    ErrorCode::ResponseMalformed,
-                    QStringLiteral("Ollama stream line invalid")));
-                return;
-              }
-              const auto delta = document.object()
-                                     .value(QStringLiteral("response"))
-                                     .toString();
-              if (!delta.isEmpty()) {
-                result.text.append(delta);
-                result.outputBytes += static_cast<quint64>(delta.toUtf8().size());
-                emit chunk(requestId, delta);
-              }
-              if (document.object().value(QStringLiteral("done")).toBool()) {
-                result.finishReason = document.object()
-                                          .value(QStringLiteral("done_reason"))
-                                          .toString(QStringLiteral("stop"));
-              }
+            if (!lineBuffer->trimmed().isEmpty() &&
+                !processOllamaLine(requestId, *lineBuffer)) {
+              return;
             }
             auto finalResult = results_.take(requestId);
             finalResult.done = true;
@@ -145,9 +126,53 @@ void CreativeService::generateOllama(
             }
             emit finished(requestId, finalResult);
           });
-  watcher->setFuture(http_->request(
+  const QPointer<CreativeService> self(this);
+  watcher->setFuture(http_->requestStreaming(
       HttpMethod::Post, networkRequest,
-      QJsonDocument(body).toJson(QJsonDocument::Compact), options));
+      QJsonDocument(body).toJson(QJsonDocument::Compact),
+      [self, requestId, lineBuffer](const QByteArray& bytes) {
+        if (self.isNull() || !self->results_.contains(requestId)) return;
+        lineBuffer->append(bytes);
+        auto newline = lineBuffer->indexOf('\n');
+        while (newline >= 0) {
+          const auto line = lineBuffer->left(newline);
+          lineBuffer->remove(0, newline + 1);
+          if (!self->processOllamaLine(requestId, line)) {
+            lineBuffer->clear();
+            return;
+          }
+          newline = lineBuffer->indexOf('\n');
+        }
+      },
+      options));
+}
+
+bool CreativeService::processOllamaLine(const QString& requestId,
+                                        const QByteArray& line) {
+  if (line.trimmed().isEmpty()) return true;
+  QJsonParseError parseError;
+  const auto document = QJsonDocument::fromJson(line, &parseError);
+  if (parseError.error != QJsonParseError::NoError || !document.isObject()) {
+    results_.remove(requestId);
+    emit failed(requestId, makeError(
+        ErrorCode::ResponseMalformed,
+        QStringLiteral("Ollama stream line invalid")));
+    return false;
+  }
+
+  auto& result = results_[requestId];
+  const auto object = document.object();
+  const auto delta = object.value(QStringLiteral("response")).toString();
+  if (!delta.isEmpty()) {
+    result.text.append(delta);
+    result.outputBytes += static_cast<quint64>(delta.toUtf8().size());
+    emit chunk(requestId, delta);
+  }
+  if (object.value(QStringLiteral("done")).toBool()) {
+    result.finishReason = object.value(QStringLiteral("done_reason"))
+                              .toString(QStringLiteral("stop"));
+  }
+  return true;
 }
 
 void CreativeService::finishCancelled(const QString& requestId) {
