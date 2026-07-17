@@ -2,11 +2,8 @@
 
 #include "core/async.h"
 
-<<<<<<< HEAD
-=======
 #include <git2.h>
 
->>>>>>> andy/fix-blockers-backend
 namespace aegis {
 
 AppContext::AppContext()
@@ -72,11 +69,7 @@ AppContext::AppContext()
 }
 
 AppContext::~AppContext() {
-<<<<<<< HEAD
   GitService::shutdownLibrary();
-=======
-  git_libgit2_shutdown();
->>>>>>> andy/fix-blockers-backend
 }
 
 ConfigService* AppContext::configService() const { return configService_.get(); }
