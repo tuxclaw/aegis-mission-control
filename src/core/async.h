@@ -7,6 +7,7 @@
 #include <QFuture>
 #include <QFutureWatcher>
 #include <QObject>
+#include <QPromise>
 #include <QThread>
 #include <QThreadPool>
 #include <QtConcurrentRun>
@@ -24,6 +25,30 @@ template <typename Function>
 auto run(Function&& function) {
   return QtConcurrent::run(QThreadPool::globalInstance(),
                            std::forward<Function>(function));
+}
+
+// Flattens a future-of-future without blocking either the GUI or worker thread.
+template <typename T>
+QFuture<T> flatten(QObject* context, QFuture<QFuture<T>> nested) {
+  auto promise = std::make_shared<QPromise<T>>();
+  promise->start();
+  auto result = promise->future();
+  auto* outer = new QFutureWatcher<QFuture<T>>(context);
+  QObject::connect(outer, &QFutureWatcher<QFuture<T>>::finished, context,
+                   [context, outer, promise] {
+    auto innerFuture = outer->result();
+    outer->deleteLater();
+    auto* inner = new QFutureWatcher<T>(context);
+    QObject::connect(inner, &QFutureWatcher<T>::finished, context,
+                     [inner, promise] {
+      promise->addResult(inner->result());
+      promise->finish();
+      inner->deleteLater();
+    });
+    inner->setFuture(std::move(innerFuture));
+  });
+  outer->setFuture(std::move(nested));
+  return result;
 }
 
 // Observes a future and invokes the callback on the context object's thread.
