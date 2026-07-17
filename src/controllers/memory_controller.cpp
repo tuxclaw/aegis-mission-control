@@ -57,6 +57,7 @@ void MemoryController::refresh() {
                 return;
               }
               files_.setItems(result.value());
+              emit filesChanged();
             });
 }
 

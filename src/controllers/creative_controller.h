@@ -33,6 +33,8 @@ class CreativeController final : public QObject {
   void chunk(QString requestId, QString delta);
   void finished(QString requestId, QString resultText, QString finishReason);
   void failed(QString requestId, QString message);
+  void errorRaised(QString message, bool retryable);
+  void toast(QString message, int level);
 
  private:
   CreativeService* service_;

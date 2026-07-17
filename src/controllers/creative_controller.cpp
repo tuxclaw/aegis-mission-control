@@ -43,6 +43,8 @@ CreativeController::CreativeController(CreativeService* service,
             emit busyChanged();
             emit resultChanged();
             emit failed(requestId, error.userMessage);
+            emit errorRaised(error.userMessage, error.retryable);
+            emit toast(error.userMessage, 3);
           });
 }
 

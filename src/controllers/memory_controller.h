@@ -31,7 +31,9 @@ class MemoryController final : public QObject {
   void currentContentChanged();
   void currentRootChanged();
   void rootIdsChanged();
+  void filesChanged();
   void errorRaised(QString message, bool retryable);
+  void toast(QString message, int level);
 
  private:
   MemoryService* service_;

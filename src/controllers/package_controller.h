@@ -26,6 +26,7 @@ class PackageController final : public QObject {
   void loadingChanged();
   void countChanged();
   void errorRaised(QString message, bool retryable);
+  void toast(QString message, int level);
 
  private:
   PackageService* service_;
