@@ -11,6 +11,8 @@ class SecretStore;
 class SettingsController final : public QObject {
   Q_OBJECT
   Q_PROPERTY(QString gatewayBaseUrl READ gatewayBaseUrl WRITE setGatewayBaseUrl NOTIFY settingsChanged)
+  Q_PROPERTY(bool gatewayTokenSet READ gatewayTokenSet NOTIFY
+                 gatewayTokenSetChanged)
   Q_PROPERTY(int gatewayConnectTimeoutMs READ gatewayConnectTimeoutMs WRITE setGatewayConnectTimeoutMs NOTIFY settingsChanged)
   Q_PROPERTY(int gatewayTotalTimeoutMs READ gatewayTotalTimeoutMs WRITE setGatewayTotalTimeoutMs NOTIFY settingsChanged)
   Q_PROPERTY(quint64 gatewayMaxResponseBytes READ gatewayMaxResponseBytes WRITE setGatewayMaxResponseBytes NOTIFY settingsChanged)
@@ -22,6 +24,8 @@ class SettingsController final : public QObject {
   Q_PROPERTY(quint64 memoryMaxFileBytes READ memoryMaxFileBytes WRITE setMemoryMaxFileBytes NOTIFY settingsChanged)
   Q_PROPERTY(QString gitRepoPath READ gitRepoPath WRITE setGitRepoPath NOTIFY settingsChanged)
   Q_PROPERTY(QString gitRemoteName READ gitRemoteName WRITE setGitRemoteName NOTIFY settingsChanged)
+  Q_PROPERTY(bool gitCredentialSet READ gitCredentialSet NOTIFY
+                 gitCredentialSetChanged)
   Q_PROPERTY(QString gitPullMode READ gitPullMode CONSTANT)
   Q_PROPERTY(QString ollamaBaseUrl READ ollamaBaseUrl WRITE setOllamaBaseUrl NOTIFY settingsChanged)
   Q_PROPERTY(int vitalsIntervalMs READ vitalsIntervalMs WRITE setVitalsIntervalMs NOTIFY settingsChanged)
@@ -35,6 +39,7 @@ class SettingsController final : public QObject {
   explicit SettingsController(ConfigService* config, SecretStore* secrets,
                               QObject* parent = nullptr);
   [[nodiscard]] QString gatewayBaseUrl() const;
+  [[nodiscard]] bool gatewayTokenSet() const;
   [[nodiscard]] int gatewayConnectTimeoutMs() const;
   [[nodiscard]] int gatewayTotalTimeoutMs() const;
   [[nodiscard]] quint64 gatewayMaxResponseBytes() const;
@@ -46,6 +51,7 @@ class SettingsController final : public QObject {
   [[nodiscard]] quint64 memoryMaxFileBytes() const;
   [[nodiscard]] QString gitRepoPath() const;
   [[nodiscard]] QString gitRemoteName() const;
+  [[nodiscard]] bool gitCredentialSet() const;
   [[nodiscard]] QString gitPullMode() const;
   [[nodiscard]] QString ollamaBaseUrl() const;
   [[nodiscard]] int vitalsIntervalMs() const;
@@ -84,11 +90,15 @@ class SettingsController final : public QObject {
 
  signals:
   void settingsChanged();
+  void gatewayTokenSetChanged();
+  void gitCredentialSetChanged();
   void errorRaised(QString message, bool retryable);
   void toast(QString message, int level);
 
  private:
   void reload();
+  void refreshGatewayTokenSet();
+  void refreshGitCredentialSet();
   ConfigService* config_;
   SecretStore* secrets_;
   QString gatewayBaseUrl_, openclawBinary_, dataRoot_, gitRepoPath_;
@@ -99,6 +109,8 @@ class SettingsController final : public QObject {
   quint64 openclawCliOutputCap_ = 4194304, memoryMaxFileBytes_ = 5242880;
   QVariantMap memoryRoots_;
   QStringList packageQueryCommand_;
+  bool gatewayTokenSet_ = false;
+  bool gitCredentialSet_ = false;
   bool reduceMotion_ = false;
 };
 }  // namespace aegis

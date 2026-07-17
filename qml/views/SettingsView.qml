@@ -38,7 +38,7 @@ Item {
         remoteField.text = settings.gitRemoteName;
         pullModeBox.currentIndex = Math.max(0, pullModeBox.find(settings.gitPullMode));
         dataRootField.text = settings.dataRoot;
-        ollamaUrlField.text = settings.ollamaUrl;
+        ollamaBaseUrlField.text = settings.ollamaBaseUrl;
         vitalsIntervalBox.value = settings.vitalsIntervalMs;
         themeBox.currentIndex = Math.max(0, themeBox.find(settings.theme === "light" ? qsTr("Light") : qsTr("Dark")));
         reduceMotionBox.checked = settings.reduceMotion;
@@ -75,7 +75,7 @@ Item {
         settings.gitPullMode = pullModeBox.currentText;
         settings.memoryRoots = pendingMemoryRoots;
         settings.dataRoot = dataRootField.text.trim();
-        settings.ollamaUrl = ollamaUrlField.text.trim();
+        settings.ollamaBaseUrl = ollamaBaseUrlField.text.trim();
         settings.vitalsIntervalMs = vitalsIntervalBox.value;
         settings.theme = themeBox.currentText.toLowerCase();
         settings.reduceMotion = reduceMotionBox.checked;
@@ -383,7 +383,7 @@ Item {
                             text: qsTr("Ollama URL")
                         }
                         TextField {
-                            id: ollamaUrlField
+                            id: ollamaBaseUrlField
                             Layout.fillWidth: true
                             Accessible.name: qsTr("Ollama base URL")
                         }
