@@ -1,9 +1,75 @@
 #include "controllers/memory_controller.h"
+
+#include <utility>
+
 #include "services/memory_service.h"
+
 namespace aegis {
-MemoryController::MemoryController(MemoryService*s,QObject*p):QObject(p),service_(s),files_(this){const auto ids=rootIds();if(!ids.isEmpty())currentRoot_=ids.first();}
-MemoryFileModel*MemoryController::files(){return &files_;} QString MemoryController::currentContent()const{return currentContent_;} QString MemoryController::currentRoot()const{return currentRoot_;} QStringList MemoryController::rootIds()const{return service_->rootIds();}
-void MemoryController::setRoot(QString id){if(!rootIds().contains(id)){const auto e=makeError(ErrorCode::PathOutsideSandbox);emit errorRaised(e.userMessage,e.retryable);return;}currentRoot_=std::move(id);currentContent_.clear();emit currentRootChanged();emit currentContentChanged();refresh();}
-void MemoryController::selectFile(QString p){service_->read(currentRoot_,std::move(p)).then(this,[this](const Result<QString>&r){if(!r)emit errorRaised(r.error().userMessage,r.error().retryable);else{currentContent_=r.value();emit currentContentChanged();}});}
-void MemoryController::refresh(){if(currentRoot_.isEmpty())return;service_->list(currentRoot_).then(this,[this](const Result<QVector<dto::MemoryFileDto>>&r){if(!r)emit errorRaised(r.error().userMessage,r.error().retryable);else files_.setItems(r.value());});}
+
+MemoryController::MemoryController(MemoryService* service, QObject* parent)
+    : QObject(parent), service_(service), files_(this) {
+  const auto ids = rootIds();
+  if (!ids.isEmpty()) currentRoot_ = ids.first();
 }
+
+MemoryFileModel* MemoryController::files() { return &files_; }
+
+QString MemoryController::currentContent() const { return currentContent_; }
+
+QString MemoryController::currentRoot() const { return currentRoot_; }
+
+QStringList MemoryController::rootIds() const { return service_->rootIds(); }
+
+void MemoryController::setRoot(QString rootId) {
+  if (!rootIds().contains(rootId)) {
+    const auto error = makeError(ErrorCode::PathOutsideSandbox);
+    emit errorRaised(error.userMessage, error.retryable);
+    return;
+  }
+  currentRoot_ = std::move(rootId);
+  currentContent_.clear();
+  emit currentRootChanged();
+  emit currentContentChanged();
+  refresh();
+}
+
+void MemoryController::selectFile(QString relativePath) {
+  service_->read(currentRoot_, std::move(relativePath))
+      .then(this, [this](const Result<QString>& result) {
+        if (!result) {
+          emit errorRaised(result.error().userMessage,
+                           result.error().retryable);
+          return;
+        }
+        currentContent_ = result.value();
+        emit currentContentChanged();
+      });
+}
+
+void MemoryController::refresh() {
+  if (currentRoot_.isEmpty()) return;
+  service_->list(currentRoot_)
+      .then(this,
+            [this](const Result<QVector<dto::MemoryFileDto>>& result) {
+              if (!result) {
+                emit errorRaised(result.error().userMessage,
+                                 result.error().retryable);
+                return;
+              }
+              files_.setItems(result.value());
+            });
+}
+
+void MemoryController::reconfigureRoots() {
+  const auto ids = rootIds();
+  if (!ids.contains(currentRoot_)) {
+    currentRoot_ = ids.isEmpty() ? QString() : ids.first();
+    currentContent_.clear();
+    emit currentRootChanged();
+    emit currentContentChanged();
+  }
+  emit rootIdsChanged();
+  refresh();
+}
+
+}  // namespace aegis

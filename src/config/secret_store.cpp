@@ -1,15 +1,14 @@
 #include "config/secret_store.h"
 
 #include <memory>
+#include <utility>
 
 #include <QPromise>
 #include <QRegularExpression>
 
 #include "core/logging.h"
 
-#if defined(AEGIS_HAS_QTKEYCHAIN)
 #include <qt6keychain/keychain.h>
-#endif
 
 namespace aegis {
 namespace {
@@ -33,14 +32,6 @@ Result<void> validateKey(const QString& key) {
   return {};
 }
 
-#if !defined(AEGIS_HAS_QTKEYCHAIN)
-AegisError unavailableError() {
-  return makeError(ErrorCode::ConfigInvalid,
-                   QStringLiteral("OS keychain backend is unavailable"));
-}
-#endif
-
-#if defined(AEGIS_HAS_QTKEYCHAIN)
 AegisError keychainError(QKeychain::Error error, const QString& operation) {
   if (error == QKeychain::EntryNotFound) {
     return makeError(ErrorCode::MissingToken,
@@ -51,20 +42,21 @@ AegisError keychainError(QKeychain::Error error, const QString& operation) {
                        .arg(operation)
                        .arg(static_cast<int>(error)));
 }
-#endif
 
 }  // namespace
 
-SecretStore::SecretStore(QObject* parent) : QObject(parent) {}
+SecretStore::SecretStore(QObject* parent)
+    : SecretStore(QStringLiteral("dev.tux.aegis"), parent) {}
+
+SecretStore::SecretStore(QString serviceName, QObject* parent)
+    : QObject(parent), serviceName_(std::move(serviceName)) {}
 
 QFuture<Result<QString>> SecretStore::read(const QString& key) {
   const auto valid = validateKey(key);
   if (!valid) return readyResult<QString>(tl::unexpected(valid.error()));
-#if defined(AEGIS_HAS_QTKEYCHAIN)
   auto promise = std::make_shared<QPromise<Result<QString>>>();
   promise->start();
-  auto* job = new QKeychain::ReadPasswordJob(
-      QString::fromLatin1(kServiceName), this);
+  auto* job = new QKeychain::ReadPasswordJob(serviceName_, this);
   job->setKey(key);
   connect(job, &QKeychain::Job::finished, this, [promise, job]() {
     if (job->error() != QKeychain::NoError) {
@@ -81,9 +73,6 @@ QFuture<Result<QString>> SecretStore::read(const QString& key) {
   });
   job->start();
   return promise->future();
-#else
-  return readyResult<QString>(tl::unexpected(unavailableError()));
-#endif
 }
 
 QFuture<Result<void>> SecretStore::write(const QString& key,
@@ -94,12 +83,10 @@ QFuture<Result<void>> SecretStore::write(const QString& key,
     return readyResult<void>(tl::unexpected(makeError(
         ErrorCode::ValidationFailed, QStringLiteral("invalid secret value"))));
   }
-#if defined(AEGIS_HAS_QTKEYCHAIN)
   logging::registerSecret(value);
   auto promise = std::make_shared<QPromise<Result<void>>>();
   promise->start();
-  auto* job = new QKeychain::WritePasswordJob(
-      QString::fromLatin1(kServiceName), this);
+  auto* job = new QKeychain::WritePasswordJob(serviceName_, this);
   job->setKey(key);
   job->setTextData(value);
   connect(job, &QKeychain::Job::finished, this, [promise, job]() {
@@ -113,19 +100,14 @@ QFuture<Result<void>> SecretStore::write(const QString& key,
   });
   job->start();
   return promise->future();
-#else
-  return readyResult<void>(tl::unexpected(unavailableError()));
-#endif
 }
 
 QFuture<Result<void>> SecretStore::erase(const QString& key) {
   const auto valid = validateKey(key);
   if (!valid) return readyResult<void>(tl::unexpected(valid.error()));
-#if defined(AEGIS_HAS_QTKEYCHAIN)
   auto promise = std::make_shared<QPromise<Result<void>>>();
   promise->start();
-  auto* job = new QKeychain::DeletePasswordJob(
-      QString::fromLatin1(kServiceName), this);
+  auto* job = new QKeychain::DeletePasswordJob(serviceName_, this);
   job->setKey(key);
   connect(job, &QKeychain::Job::finished, this, [promise, job]() {
     if (job->error() != QKeychain::NoError &&
@@ -139,9 +121,6 @@ QFuture<Result<void>> SecretStore::erase(const QString& key) {
   });
   job->start();
   return promise->future();
-#else
-  return readyResult<void>(tl::unexpected(unavailableError()));
-#endif
 }
 
 QFuture<Result<bool>> SecretStore::has(const QString& key) {

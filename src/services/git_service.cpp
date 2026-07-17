@@ -1,19 +1,20 @@
 #include "services/git_service.h"
 
 #include <algorithm>
+#include <atomic>
+#include <memory>
 
 #include <QDir>
 #include <QFileInfo>
 #include <QRegularExpression>
 #include <QSet>
+#include <QTimer>
 
 #include "config/config_service.h"
 #include "config/secret_store.h"
 #include "core/async.h"
 
-#if defined(AEGIS_HAS_LIBGIT2)
 #include <git2.h>
-#endif
 
 namespace aegis {
 namespace {
@@ -51,8 +52,6 @@ Result<void> validatePaths(const QStringList& paths) {
   return {};
 }
 
-#if defined(AEGIS_HAS_LIBGIT2)
-
 struct RepositoryDeleter {
   void operator()(git_repository* repository) const {
     git_repository_free(repository);
@@ -80,10 +79,14 @@ Result<Repository> openRepository(const QString& path) {
 }
 
 dto::GitFileState stateFromStatus(unsigned int status, bool index) {
-  const auto created = index ? GIT_STATUS_INDEX_NEW : GIT_STATUS_WT_NEW;
-  const auto modified = index ? GIT_STATUS_INDEX_MODIFIED : GIT_STATUS_WT_MODIFIED;
-  const auto deleted = index ? GIT_STATUS_INDEX_DELETED : GIT_STATUS_WT_DELETED;
-  const auto renamed = index ? GIT_STATUS_INDEX_RENAMED : GIT_STATUS_WT_RENAMED;
+  const auto created = static_cast<unsigned int>(
+      index ? GIT_STATUS_INDEX_NEW : GIT_STATUS_WT_NEW);
+  const auto modified = static_cast<unsigned int>(
+      index ? GIT_STATUS_INDEX_MODIFIED : GIT_STATUS_WT_MODIFIED);
+  const auto deleted = static_cast<unsigned int>(
+      index ? GIT_STATUS_INDEX_DELETED : GIT_STATUS_WT_DELETED);
+  const auto renamed = static_cast<unsigned int>(
+      index ? GIT_STATUS_INDEX_RENAMED : GIT_STATUS_WT_RENAMED);
   if ((status & GIT_STATUS_CONFLICTED) != 0) return dto::GitFileState::Conflicted;
   if ((status & created) != 0) return dto::GitFileState::New;
   if ((status & modified) != 0) return dto::GitFileState::Modified;
@@ -172,10 +175,35 @@ Result<dto::GitStatusDto> repositoryStatus(const QString& path) {
   return result;
 }
 
+struct RemoteCallbacksPayload {
+  QString credential;
+  std::atomic_bool* timedOut = nullptr;
+};
+
+bool remoteTimedOut(void* payload) {
+  const auto* context = static_cast<const RemoteCallbacksPayload*>(payload);
+  return context != nullptr && context->timedOut != nullptr &&
+         context->timedOut->load(std::memory_order_relaxed);
+}
+
+int transferProgressCallback(const git_indexer_progress*, void* payload) {
+  return remoteTimedOut(payload) ? -1 : 0;
+}
+
+int transportMessageCallback(const char*, int, void* payload) {
+  return remoteTimedOut(payload) ? -1 : 0;
+}
+
+int pushProgressCallback(unsigned int, unsigned int, size_t, void* payload) {
+  return remoteTimedOut(payload) ? -1 : 0;
+}
+
 int credentialCallback(git_credential** output, const char*,
                        const char* usernameFromUrl, unsigned int allowedTypes,
                        void* payload) {
-  const auto* secret = static_cast<const QString*>(payload);
+  const auto* context = static_cast<const RemoteCallbacksPayload*>(payload);
+  if (remoteTimedOut(payload)) return GIT_EUSER;
+  const auto* secret = context != nullptr ? &context->credential : nullptr;
   const auto username = usernameFromUrl != nullptr ? usernameFromUrl : "git";
   if ((allowedTypes & GIT_CREDENTIAL_SSH_KEY) != 0 && secret != nullptr &&
       QFileInfo(*secret).isFile()) {
@@ -194,17 +222,25 @@ int credentialCallback(git_credential** output, const char*,
 }
 
 Result<void> fetchRemote(git_repository* repository, const QString& remoteName,
-                         const QString& credential) {
+                         const QString& credential,
+                         std::atomic_bool* timedOut) {
   git_remote* remote = nullptr;
   if (git_remote_lookup(&remote, repository, remoteName.toUtf8().constData()) < 0) {
     return tl::unexpected(makeError(ErrorCode::GitOperationFailed,
                                     QStringLiteral("configured remote not found")));
   }
+  RemoteCallbacksPayload payload{credential, timedOut};
   git_fetch_options options = GIT_FETCH_OPTIONS_INIT;
   options.callbacks.credentials = credentialCallback;
-  options.callbacks.payload = const_cast<QString*>(&credential);
+  options.callbacks.transfer_progress = transferProgressCallback;
+  options.callbacks.sideband_progress = transportMessageCallback;
+  options.callbacks.payload = &payload;
   const auto code = git_remote_fetch(remote, nullptr, &options, nullptr);
   git_remote_free(remote);
+  if (timedOut != nullptr && timedOut->load(std::memory_order_relaxed)) {
+    return tl::unexpected(makeError(ErrorCode::NetworkTimeout,
+                                    QStringLiteral("git fetch timed out")));
+  }
   if (code == GIT_EAUTH) {
     return tl::unexpected(makeError(ErrorCode::GitAuthFailed));
   }
@@ -213,14 +249,6 @@ Result<void> fetchRemote(git_repository* repository, const QString& remoteName,
                                     QStringLiteral("remote fetch failed")));
   }
   return {};
-}
-
-#endif
-
-template <typename T>
-Result<T> libgitUnavailable() {
-  return tl::unexpected(makeError(ErrorCode::GitOperationFailed,
-                                  QStringLiteral("libgit2 unavailable")));
 }
 
 }  // namespace
@@ -233,11 +261,7 @@ QFuture<Result<dto::GitStatusDto>> GitService::status() {
   const auto path = validatedRepoPath(config_);
   return async::run([path]() -> Result<dto::GitStatusDto> {
     if (!path) return tl::unexpected(path.error());
-#if defined(AEGIS_HAS_LIBGIT2)
     return repositoryStatus(path.value());
-#else
-    return libgitUnavailable<dto::GitStatusDto>();
-#endif
   });
 }
 
@@ -248,7 +272,6 @@ QFuture<Result<void>> GitService::stage(QStringList explicitPaths) {
                         () -> Result<void> {
     if (!path) return tl::unexpected(path.error());
     if (!valid) return tl::unexpected(valid.error());
-#if defined(AEGIS_HAS_LIBGIT2)
     auto repository = openRepository(path.value());
     if (!repository) return tl::unexpected(repository.error());
     git_index* index = nullptr;
@@ -268,9 +291,6 @@ QFuture<Result<void>> GitService::stage(QStringList explicitPaths) {
     QMetaObject::invokeMethod(this, &GitService::repoChanged,
                               Qt::QueuedConnection);
     return {};
-#else
-    return libgitUnavailable<void>();
-#endif
   });
 }
 
@@ -281,7 +301,6 @@ QFuture<Result<void>> GitService::unstage(QStringList explicitPaths) {
                         () -> Result<void> {
     if (!path) return tl::unexpected(path.error());
     if (!valid) return tl::unexpected(valid.error());
-#if defined(AEGIS_HAS_LIBGIT2)
     auto repository = openRepository(path.value());
     if (!repository) return tl::unexpected(repository.error());
     git_object* target = nullptr;
@@ -304,9 +323,6 @@ QFuture<Result<void>> GitService::unstage(QStringList explicitPaths) {
     QMetaObject::invokeMethod(this, &GitService::repoChanged,
                               Qt::QueuedConnection);
     return {};
-#else
-    return libgitUnavailable<void>();
-#endif
   });
 }
 
@@ -323,7 +339,6 @@ QFuture<Result<QString>> GitService::commit(QString message,
       return tl::unexpected(makeError(ErrorCode::ValidationFailed,
                                       QStringLiteral("invalid commit request")));
     }
-#if defined(AEGIS_HAS_LIBGIT2)
     const auto current = repositoryStatus(path.value());
     if (!current) return tl::unexpected(current.error());
     QSet<QString> actual;
@@ -377,26 +392,32 @@ QFuture<Result<QString>> GitService::commit(QString message,
     QMetaObject::invokeMethod(this, &GitService::repoChanged,
                               Qt::QueuedConnection);
     return QString::fromLatin1(buffer).left(12);
-#else
-    return libgitUnavailable<QString>();
-#endif
   });
 }
 
 QFuture<Result<void>> GitService::pull() {
   const auto path = validatedRepoPath(config_);
   const auto remoteName = config_->gitRemoteName();
+  auto timedOut = std::make_shared<std::atomic_bool>(false);
+  auto* timeout = new QTimer(this);
+  timeout->setSingleShot(true);
+  connect(timeout, &QTimer::timeout, this, [timedOut] {
+    timedOut->store(true, std::memory_order_relaxed);
+  });
+  timeout->start(120000);
   return async::flatten(this, secrets_->read(QStringLiteral("git.credential"))
-      .then(this, [path, remoteName](const Result<QString>& credential) {
-        return async::run([path, remoteName, credential]() -> Result<void> {
+      .then(this, [path, remoteName, timedOut](const Result<QString>& credential) {
+        return async::run([path, remoteName, credential, timedOut]() -> Result<void> {
+          if (timedOut->load(std::memory_order_relaxed)) {
+            return tl::unexpected(makeError(ErrorCode::NetworkTimeout));
+          }
           if (!path) return tl::unexpected(path.error());
           if (!remoteName) return tl::unexpected(remoteName.error());
           if (!credential) return tl::unexpected(makeError(ErrorCode::GitAuthFailed));
-#if defined(AEGIS_HAS_LIBGIT2)
           auto repository = openRepository(path.value());
           if (!repository) return tl::unexpected(repository.error());
           const auto fetched = fetchRemote(repository->get(), remoteName.value(),
-                                           credential.value());
+                                           credential.value(), timedOut.get());
           if (!fetched) return tl::unexpected(fetched.error());
           git_reference* head = nullptr;
           git_reference* upstream = nullptr;
@@ -423,31 +444,49 @@ QFuture<Result<void>> GitService::pull() {
           } else if ((analysis & GIT_MERGE_ANALYSIS_FASTFORWARD) == 0) {
             result = tl::unexpected(makeError(ErrorCode::GitConflict));
           } else {
-            git_reference* updated = nullptr;
-            if (git_reference_set_target(&updated, head, targetId,
-                                         "AEGIS ff-only pull") < 0) {
-              result = tl::unexpected(makeError(ErrorCode::GitOperationFailed));
+            git_object* targetObject = nullptr;
+            git_checkout_options dryRun = GIT_CHECKOUT_OPTIONS_INIT;
+            dryRun.checkout_strategy = GIT_CHECKOUT_SAFE | GIT_CHECKOUT_DRY_RUN;
+            if (git_object_lookup(&targetObject, repository->get(), targetId,
+                                  GIT_OBJECT_COMMIT) < 0 ||
+                git_checkout_head(repository->get(), &dryRun) < 0 ||
+                git_checkout_tree(repository->get(), targetObject, &dryRun) < 0) {
+              result = tl::unexpected(makeError(ErrorCode::GitConflict));
             } else {
-              git_checkout_options checkout = GIT_CHECKOUT_OPTIONS_INIT;
-              checkout.checkout_strategy = GIT_CHECKOUT_SAFE;
-              if (git_repository_set_head(repository->get(),
-                                          git_reference_name(updated)) < 0 ||
-                  git_checkout_head(repository->get(), &checkout) < 0) {
-                result = tl::unexpected(makeError(ErrorCode::GitConflict));
+              const auto originalId = *git_reference_target(head);
+              git_reference* updated = nullptr;
+              if (git_reference_set_target(&updated, head, targetId,
+                                           "AEGIS ff-only pull") < 0) {
+                result = tl::unexpected(makeError(ErrorCode::GitOperationFailed));
+              } else {
+                git_checkout_options checkout = GIT_CHECKOUT_OPTIONS_INIT;
+                checkout.checkout_strategy = GIT_CHECKOUT_SAFE;
+                if (git_checkout_head(repository->get(), &checkout) < 0) {
+                  git_reference* rolledBack = nullptr;
+                  git_reference_set_target(&rolledBack, updated, &originalId,
+                                           "AEGIS rollback failed checkout");
+                  git_reference_free(rolledBack);
+                  result = tl::unexpected(makeError(ErrorCode::GitConflict));
+                }
+                git_reference_free(updated);
               }
-              git_reference_free(updated);
             }
+            git_object_free(targetObject);
           }
           git_annotated_commit_free(target);
           git_reference_free(upstream);
           git_reference_free(head);
           return result;
-#else
-          return libgitUnavailable<void>();
-#endif
         });
       }))
-      .then(this, [this](const Result<void>& result) {
+      .then(this, [this, timeout, timedOut](const Result<void>& result) {
+        timeout->stop();
+        timeout->deleteLater();
+        if (timedOut->load(std::memory_order_relaxed)) {
+          return Result<void>(tl::unexpected(
+              makeError(ErrorCode::NetworkTimeout,
+                        QStringLiteral("git pull exceeded timeout"))));
+        }
         if (result) emit repoChanged();
         return result;
       });
@@ -456,13 +495,22 @@ QFuture<Result<void>> GitService::pull() {
 QFuture<Result<void>> GitService::push() {
   const auto path = validatedRepoPath(config_);
   const auto remoteName = config_->gitRemoteName();
+  auto timedOut = std::make_shared<std::atomic_bool>(false);
+  auto* timeout = new QTimer(this);
+  timeout->setSingleShot(true);
+  connect(timeout, &QTimer::timeout, this, [timedOut] {
+    timedOut->store(true, std::memory_order_relaxed);
+  });
+  timeout->start(120000);
   return async::flatten(this, secrets_->read(QStringLiteral("git.credential"))
-      .then(this, [path, remoteName](const Result<QString>& credential) {
-        return async::run([path, remoteName, credential]() -> Result<void> {
+      .then(this, [path, remoteName, timedOut](const Result<QString>& credential) {
+        return async::run([path, remoteName, credential, timedOut]() -> Result<void> {
+          if (timedOut->load(std::memory_order_relaxed)) {
+            return tl::unexpected(makeError(ErrorCode::NetworkTimeout));
+          }
           if (!path) return tl::unexpected(path.error());
           if (!remoteName) return tl::unexpected(remoteName.error());
           if (!credential) return tl::unexpected(makeError(ErrorCode::GitAuthFailed));
-#if defined(AEGIS_HAS_LIBGIT2)
           auto repository = openRepository(path.value());
           if (!repository) return tl::unexpected(repository.error());
           git_reference* head = nullptr;
@@ -478,24 +526,35 @@ QFuture<Result<void>> GitService::push() {
                                 remoteName->toUtf8().constData()) < 0) {
             return tl::unexpected(makeError(ErrorCode::GitOperationFailed));
           }
-          const auto refspecBytes = QByteArray("refs/heads/") + branch +
-                                    ":refs/heads/" + branch;
+          auto refspecBytes = QByteArray("refs/heads/") + branch +
+                              ":refs/heads/" + branch;
           char* refspecString = refspecBytes.data();
           git_strarray refspec{&refspecString, 1};
+          RemoteCallbacksPayload payload{credential.value(), timedOut.get()};
           git_push_options options = GIT_PUSH_OPTIONS_INIT;
           options.callbacks.credentials = credentialCallback;
-          options.callbacks.payload = const_cast<QString*>(&credential.value());
+          options.callbacks.push_transfer_progress = pushProgressCallback;
+          options.callbacks.sideband_progress = transportMessageCallback;
+          options.callbacks.payload = &payload;
           const auto code = git_remote_push(remote, &refspec, &options);
           git_remote_free(remote);
+          if (timedOut->load(std::memory_order_relaxed)) {
+            return tl::unexpected(makeError(ErrorCode::NetworkTimeout,
+                                            QStringLiteral("git push timed out")));
+          }
           if (code == GIT_EAUTH) return tl::unexpected(makeError(ErrorCode::GitAuthFailed));
           if (code < 0) return tl::unexpected(makeError(ErrorCode::GitOperationFailed));
           return {};
-#else
-          return libgitUnavailable<void>();
-#endif
         });
       }))
-      .then(this, [this](const Result<void>& result) {
+      .then(this, [this, timeout, timedOut](const Result<void>& result) {
+        timeout->stop();
+        timeout->deleteLater();
+        if (timedOut->load(std::memory_order_relaxed)) {
+          return Result<void>(tl::unexpected(
+              makeError(ErrorCode::NetworkTimeout,
+                        QStringLiteral("git push exceeded timeout"))));
+        }
         if (result) emit repoChanged();
         return result;
       });

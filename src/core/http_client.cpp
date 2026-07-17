@@ -251,6 +251,14 @@ QFuture<Result<QByteArray>> HttpClient::request(
   return future;
 }
 
+QNetworkReply* HttpClient::postStream(const QNetworkRequest& request,
+                                      const QByteArray& body) {
+  if (!request.url().isValid() || request.url().scheme().isEmpty()) {
+    return nullptr;
+  }
+  return manager_.post(request, body);
+}
+
 QFuture<Result<QJsonObject>> HttpClient::getJson(
     const QNetworkRequest& request, const HttpRequestOptions& options) {
   return get(request, options).then(this, [](const Result<QByteArray>& result) {

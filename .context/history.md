@@ -12,6 +12,19 @@
 
 **Status:** Complete
 
+## [2026-07-17] Backend Blocker Remediation
+**Agent:** Helen 🦸‍♀️
+**Branch:** `andy/fix-blockers-backend`
+
+- Replaced buffered Ollama and gateway generation with bounded, line-buffered `QNetworkReply::readyRead` streaming, live reply cancellation, and connect/idle/total timers.
+- Made fast-forward pull verify the target checkout before ref mutation, roll back on an unexpected checkout failure, and added 120-second pull/push cancellation through libgit2 progress callbacks.
+- Moved settings persistence to an immutable worker-thread snapshot with one final sync, completion signals, busy state, and successful runtime reconfiguration for vitals and memory roots.
+- Made libgit2 and QtKeychain unconditional build dependencies and removed the fail-closed compile-time stubs.
+- Added controller reflection, gateway fail-closed, credential-containment, incremental streaming, and reply-cancellation regression coverage.
+- Verified the full GUI target with real libgit2/QtKeychain, 9/9 tests, warnings-as-errors, offscreen startup smoke, and `git diff --check`.
+
+**Status:** Complete
+
 ## [2026-07-17] Controller-Backed Mission Control Views
 **Agent:** Dash ⚡
 **Branch:** `andy/views`

@@ -93,7 +93,7 @@ Item {
         const value = gatewayTokenField.text;
         gatewayTokenField.clear();
         busy = true;
-        settings.setGatewayToken(value);
+        settings.updateGatewayAccess(value);
     }
 
     function addMemoryRoot() {
@@ -186,7 +186,7 @@ Item {
                             id: gatewayTokenField
                             Layout.fillWidth: true
                             echoMode: TextInput.Password
-                            placeholderText: settings.gatewayTokenSet ? qsTr("Credential set") : qsTr("Credential not set")
+                            placeholderText: settings.gatewayAccessConfigured ? qsTr("Credential set") : qsTr("Credential not set")
                             Accessible.name: qsTr("New gateway token")
                         }
                         SecondaryButton {
@@ -272,7 +272,7 @@ Item {
                             id: gitCredentialField
                             Layout.fillWidth: true
                             echoMode: TextInput.Password
-                            placeholderText: settings.gitCredentialSet ? qsTr("Credential set") : qsTr("Credential not set")
+                            placeholderText: settings.gitAccessConfigured ? qsTr("Credential set") : qsTr("Credential not set")
                             readOnly: true
                             Accessible.name: qsTr("Git credential status")
                         }

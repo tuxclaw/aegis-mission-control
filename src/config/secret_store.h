@@ -14,6 +14,8 @@ class SecretStore : public QObject {
  public:
   // Creates a keychain wrapper for the dev.tux.aegis service.
   explicit SecretStore(QObject* parent = nullptr);
+  // Creates an isolated keychain namespace for tests or alternate profiles.
+  explicit SecretStore(QString serviceName, QObject* parent = nullptr);
 
   // Reads a secret from the OS keychain and fails closed when unavailable.
   [[nodiscard]] QFuture<Result<QString>> read(const QString& key);
@@ -29,7 +31,7 @@ class SecretStore : public QObject {
   [[nodiscard]] QFuture<Result<bool>> has(const QString& key);
 
  private:
-  static constexpr auto kServiceName = "dev.tux.aegis";
+  QString serviceName_;
 };
 
 }  // namespace aegis

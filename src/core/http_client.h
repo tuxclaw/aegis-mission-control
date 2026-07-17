@@ -9,6 +9,8 @@
 
 #include "core/result.h"
 
+class QNetworkReply;
+
 namespace aegis {
 
 enum class HttpMethod { Get, Post, Put, Delete };
@@ -37,6 +39,10 @@ class HttpClient : public QObject {
   [[nodiscard]] QFuture<Result<QByteArray>> request(
       HttpMethod method, const QNetworkRequest& request, const QByteArray& body,
       const HttpRequestOptions& options = HttpRequestOptions{});
+
+  // Starts a raw POST whose reply is consumed and bounded by a streaming owner.
+  [[nodiscard]] QNetworkReply* postStream(const QNetworkRequest& request,
+                                          const QByteArray& body);
 
   // Sends a GET request and requires a JSON object response.
   [[nodiscard]] QFuture<Result<QJsonObject>> getJson(

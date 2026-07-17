@@ -2,9 +2,7 @@
 
 #include "core/async.h"
 
-#if defined(AEGIS_HAS_LIBGIT2)
 #include <git2.h>
-#endif
 
 namespace aegis {
 
@@ -54,14 +52,24 @@ AppContext::AppContext()
                    gitController_.get(), &GitController::refresh);
   QObject::connect(agentController_.get(), &AgentController::refreshed,
                    appController_.get(), &AppController::markSynced);
+  QObject::connect(settingsController_.get(),
+                   &SettingsController::settingsApplied,
+                   memoryController_.get(),
+                   &MemoryController::reconfigureRoots);
+  QObject::connect(settingsController_.get(),
+                   &SettingsController::settingsApplied, [this] {
+                     const auto interval = configService_->vitalsIntervalMs();
+                     if (interval) {
+                       vitalsService_->start(
+                           std::chrono::milliseconds(interval.value()));
+                     }
+                   });
   auto interval = configService_->vitalsIntervalMs();
   vitalsService_->start(std::chrono::milliseconds(interval ? interval.value() : 1000));
 }
 
 AppContext::~AppContext() {
-#if defined(AEGIS_HAS_LIBGIT2)
   git_libgit2_shutdown();
-#endif
 }
 
 ConfigService* AppContext::configService() const { return configService_.get(); }
