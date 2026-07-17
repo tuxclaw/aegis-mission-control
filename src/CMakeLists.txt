@@ -38,6 +38,62 @@ set(AEGIS_CORE_SOURCES
   dto/package_dto.h
   dto/vitals_dto.cpp
   dto/vitals_dto.h
+  controllers/agent_controller.cpp
+  controllers/agent_controller.h
+  controllers/app_controller.cpp
+  controllers/app_controller.h
+  controllers/calendar_controller.cpp
+  controllers/calendar_controller.h
+  controllers/creative_controller.cpp
+  controllers/creative_controller.h
+  controllers/cron_controller.cpp
+  controllers/cron_controller.h
+  controllers/git_controller.cpp
+  controllers/git_controller.h
+  controllers/memory_controller.cpp
+  controllers/memory_controller.h
+  controllers/model_controller.cpp
+  controllers/model_controller.h
+  controllers/package_controller.cpp
+  controllers/package_controller.h
+  controllers/settings_controller.cpp
+  controllers/settings_controller.h
+  controllers/vitals_controller.cpp
+  controllers/vitals_controller.h
+  models/agent_list_model.cpp
+  models/agent_list_model.h
+  models/calendar_event_model.cpp
+  models/calendar_event_model.h
+  models/cron_job_model.cpp
+  models/cron_job_model.h
+  models/git_file_model.cpp
+  models/git_file_model.h
+  models/memory_file_model.cpp
+  models/memory_file_model.h
+  models/model_list_model.cpp
+  models/model_list_model.h
+  models/package_list_model.cpp
+  models/package_list_model.h
+  services/calendar_store.cpp
+  services/calendar_store.h
+  services/creative_service.cpp
+  services/creative_service.h
+  services/cron_service.cpp
+  services/cron_service.h
+  services/gateway_service.cpp
+  services/gateway_service.h
+  services/git_service.cpp
+  services/git_service.h
+  services/memory_service.cpp
+  services/memory_service.h
+  services/model_service.cpp
+  services/model_service.h
+  services/openclaw_cli.cpp
+  services/openclaw_cli.h
+  services/package_service.cpp
+  services/package_service.h
+  services/vitals_service.cpp
+  services/vitals_service.h
 )
 
 add_library(aegis_core STATIC ${AEGIS_CORE_SOURCES})
@@ -49,6 +105,13 @@ target_include_directories(aegis_core
 target_link_libraries(aegis_core
   PUBLIC Qt6::Core Qt6::Concurrent Qt6::Network
 )
+
+if(TARGET Libgit2::Libgit2)
+  target_link_libraries(aegis_core PRIVATE Libgit2::Libgit2)
+  target_compile_definitions(aegis_core PRIVATE AEGIS_HAS_LIBGIT2=1)
+else()
+  message(WARNING "libgit2 development files not found; GitService will fail closed")
+endif()
 
 if(TARGET Qt6Keychain::Qt6Keychain)
   target_link_libraries(aegis_core PRIVATE Qt6Keychain::Qt6Keychain)

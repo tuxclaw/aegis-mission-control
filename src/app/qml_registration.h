@@ -2,7 +2,10 @@
 
 #include <QObject>
 
+class QQmlApplicationEngine;
+
 namespace aegis {
+class AppContext;
 
 class ErrorCodeValues : public QObject {
   Q_OBJECT
@@ -50,6 +53,9 @@ class QmlRegistration {
  public:
   // Registers DTO, error, and connection enums for named QML access.
   static void registerTypes();
+  // Exposes every controller as its documented context property.
+  static void registerContext(QQmlApplicationEngine* engine,
+                              AppContext* context);
 };
 
 }  // namespace aegis

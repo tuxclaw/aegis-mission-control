@@ -52,7 +52,10 @@ QVariantMap defaultMemoryRoots() {
 QStringList defaultPackageCommand() {
 #if defined(Q_OS_LINUX)
   const auto rpm = QStandardPaths::findExecutable(QStringLiteral("rpm"));
-  if (!rpm.isEmpty()) return {rpm, QStringLiteral("-qa")};
+  if (!rpm.isEmpty()) {
+    return {rpm, QStringLiteral("-qa"), QStringLiteral("--qf"),
+            QStringLiteral("%{NAME}\t%{VERSION}-%{RELEASE}.%{ARCH}\t%{SUMMARY}\n")};
+  }
   const auto dpkg = QStandardPaths::findExecutable(QStringLiteral("dpkg-query"));
   if (!dpkg.isEmpty()) {
     return {dpkg, QStringLiteral("-W"),
