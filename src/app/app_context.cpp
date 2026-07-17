@@ -48,8 +48,9 @@ AppContext::AppContext()
   QFile configFile(configPath);
   if (configFile.open(QIODevice::ReadOnly)) {
     const auto doc = QJsonDocument::fromJson(configFile.readAll());
-    const auto gateway = doc.object().value(QStringLiteral("gateway")).toObject();
-    const auto token = gateway.value(QStringLiteral("auth")).toObject()
+    const auto root = doc.object();
+    // Token is at top-level auth.token (not gateway.auth.token)
+    const auto token = root.value(QStringLiteral("auth")).toObject()
                            .value(QStringLiteral("token")).toString();
     if (!token.isEmpty()) {
       (void)secretStore_->write(QStringLiteral("gateway.token"), token);
