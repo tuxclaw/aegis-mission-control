@@ -1,5 +1,11 @@
 #include "app/app_context.h"
 
+#include <QDir>
+#include <QFile>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QStandardPaths>
+
 #include "core/async.h"
 
 #include <git2.h>
@@ -36,6 +42,20 @@ AppContext::AppContext()
       settingsController_(std::make_unique<SettingsController>(
           configService_.get(), secretStore_.get())) {
   async::configureGlobalThreadPool();
+
+  // Auto-detect gateway token from OpenClaw config if not in SecretStore
+  const QString configPath = QDir::homePath() + QStringLiteral("/.openclaw/openclaw.json");
+  QFile configFile(configPath);
+  if (configFile.open(QIODevice::ReadOnly)) {
+    const auto doc = QJsonDocument::fromJson(configFile.readAll());
+    const auto gateway = doc.object().value(QStringLiteral("gateway")).toObject();
+    const auto token = gateway.value(QStringLiteral("auth")).toObject()
+                           .value(QStringLiteral("token")).toString();
+    if (!token.isEmpty()) {
+      (void)secretStore_->write(QStringLiteral("gateway.token"), token);
+    }
+  }
+
   QObject::connect(appController_.get(), &AppController::refreshAllRequested,
                    agentController_.get(), &AgentController::refresh);
   QObject::connect(appController_.get(), &AppController::refreshAllRequested,

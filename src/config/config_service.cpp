@@ -15,7 +15,7 @@
 namespace aegis {
 namespace {
 
-constexpr auto kGatewayDefault = "http://localhost";
+constexpr auto kGatewayDefault = "http://localhost:18789";
 constexpr auto kOllamaDefault = "http://localhost:11434";
 
 bool containsNul(const QString& value) { return value.contains(QChar::Null); }
