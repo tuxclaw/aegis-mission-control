@@ -23,7 +23,9 @@ Item {
             root.errorMessage = message;
             root.retryable = canRetry;
         }
-        function onToast(message, level) { ToastHost.show(message, level); }
+        function onToast(message, level) {
+            ToastHost.show(message, level);
+        }
     }
 
     ColumnLayout {
@@ -32,7 +34,9 @@ Item {
 
         RowLayout {
             Layout.fillWidth: true
-            Item { Layout.fillWidth: true }
+            Item {
+                Layout.fillWidth: true
+            }
             TextField {
                 id: filterField
                 Layout.preferredWidth: Theme.splitPaneMinimumWidth
@@ -58,11 +62,36 @@ Item {
                     border.width: Theme.borderWidth
                     border.color: Theme.divider
                     RowLayout {
-                        anchors { fill: parent; leftMargin: Theme.space.lg; rightMargin: Theme.space.lg }
+                        anchors {
+                            fill: parent
+                            leftMargin: Theme.space.lg
+                            rightMargin: Theme.space.lg
+                        }
                         spacing: Theme.space.md
-                        Text { Layout.preferredWidth: parent.width * 0.45; text: qsTr("NAME"); color: Theme.textMuted; font.family: Typography.caption.family; font.pixelSize: Typography.caption.pixelSize; font.weight: Typography.caption.weight }
-                        Text { Layout.preferredWidth: parent.width * 0.35; text: qsTr("VERSION"); color: Theme.textMuted; font.family: Typography.caption.family; font.pixelSize: Typography.caption.pixelSize; font.weight: Typography.caption.weight }
-                        Text { Layout.fillWidth: true; text: qsTr("SOURCE"); color: Theme.textMuted; font.family: Typography.caption.family; font.pixelSize: Typography.caption.pixelSize; font.weight: Typography.caption.weight }
+                        Text {
+                            Layout.preferredWidth: parent.width * 0.45
+                            text: qsTr("NAME")
+                            color: Theme.textMuted
+                            font.family: Typography.caption.family
+                            font.pixelSize: Typography.caption.pixelSize
+                            font.weight: Typography.caption.weight
+                        }
+                        Text {
+                            Layout.preferredWidth: parent.width * 0.35
+                            text: qsTr("VERSION")
+                            color: Theme.textMuted
+                            font.family: Typography.caption.family
+                            font.pixelSize: Typography.caption.pixelSize
+                            font.weight: Typography.caption.weight
+                        }
+                        Text {
+                            Layout.fillWidth: true
+                            text: qsTr("SOURCE")
+                            color: Theme.textMuted
+                            font.family: Typography.caption.family
+                            font.pixelSize: Typography.caption.pixelSize
+                            font.weight: Typography.caption.weight
+                        }
                     }
                 }
 
@@ -84,13 +113,43 @@ Item {
                         color: packageHover.hovered ? Theme.accentSoft : Theme.transparent
 
                         RowLayout {
-                            anchors { fill: parent; leftMargin: Theme.space.lg; rightMargin: Theme.space.lg }
+                            anchors {
+                                fill: parent
+                                leftMargin: Theme.space.lg
+                                rightMargin: Theme.space.lg
+                            }
                             spacing: Theme.space.md
-                            Text { Layout.preferredWidth: parent.width * 0.45; text: packageRow.name; color: Theme.textPrimary; elide: Text.ElideRight; font.family: Typography.data.family; font.pixelSize: Typography.data.pixelSize; font.weight: Typography.data.weight }
-                            Text { Layout.preferredWidth: parent.width * 0.35; text: packageRow.version; color: Theme.textSecondary; elide: Text.ElideMiddle; font.family: Typography.dataSmall.family; font.pixelSize: Typography.dataSmall.pixelSize; font.weight: Typography.dataSmall.weight }
-                            Text { Layout.fillWidth: true; text: packageRow.source; color: Theme.textMuted; elide: Text.ElideRight; font.family: Typography.caption.family; font.pixelSize: Typography.caption.pixelSize; font.weight: Typography.caption.weight }
+                            Text {
+                                Layout.preferredWidth: parent.width * 0.45
+                                text: packageRow.name
+                                color: Theme.textPrimary
+                                elide: Text.ElideRight
+                                font.family: Typography.data.family
+                                font.pixelSize: Typography.data.pixelSize
+                                font.weight: Typography.data.weight
+                            }
+                            Text {
+                                Layout.preferredWidth: parent.width * 0.35
+                                text: packageRow.version
+                                color: Theme.textSecondary
+                                elide: Text.ElideMiddle
+                                font.family: Typography.dataSmall.family
+                                font.pixelSize: Typography.dataSmall.pixelSize
+                                font.weight: Typography.dataSmall.weight
+                            }
+                            Text {
+                                Layout.fillWidth: true
+                                text: packageRow.source
+                                color: Theme.textMuted
+                                elide: Text.ElideRight
+                                font.family: Typography.caption.family
+                                font.pixelSize: Typography.caption.pixelSize
+                                font.weight: Typography.caption.weight
+                            }
                         }
-                        HoverHandler { id: packageHover }
+                        HoverHandler {
+                            id: packageHover
+                        }
                     }
                 }
 
@@ -101,7 +160,11 @@ Item {
                     border.width: Theme.borderWidth
                     border.color: Theme.divider
                     Text {
-                        anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: Theme.space.lg }
+                        anchors {
+                            left: parent.left
+                            verticalCenter: parent.verticalCenter
+                            leftMargin: Theme.space.lg
+                        }
                         text: qsTr("%1 packages · read-only inventory").arg(packages.count)
                         color: Theme.textMuted
                         font.family: Typography.dataSmall.family
@@ -121,7 +184,10 @@ Item {
         actionText: filterField.text.length > 0 ? qsTr("Clear filter") : qsTr("Refresh")
         onActionTriggered: filterField.text.length > 0 ? filterField.clear() : root.refreshView()
     }
-    LoadingState { anchors.fill: parent; visible: packages.loading && packageTable.rows === 0 }
+    LoadingState {
+        anchors.fill: parent
+        visible: packages.loading && packageTable.rows === 0
+    }
     ErrorState {
         anchors.centerIn: parent
         width: Math.min(parent.width - Theme.space.xxl, Theme.dialogWidth)

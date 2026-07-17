@@ -59,29 +59,76 @@ ApplicationWindow {
 
     ListModel {
         id: navigationModel
-        ListElement { name: "Dashboard"; iconPath: "qrc:/icons/dashboard.svg" }
-        ListElement { name: "Agents"; iconPath: "qrc:/icons/agents.svg" }
-        ListElement { name: "Calendar"; iconPath: "qrc:/icons/calendar.svg" }
-        ListElement { name: "Cron"; iconPath: "qrc:/icons/clock.svg" }
-        ListElement { name: "Memory"; iconPath: "qrc:/icons/memory.svg" }
-        ListElement { name: "Models"; iconPath: "qrc:/icons/models.svg" }
-        ListElement { name: "Packages"; iconPath: "qrc:/icons/package.svg" }
-        ListElement { name: "Git"; iconPath: "qrc:/icons/git-branch.svg" }
-        ListElement { name: "Creative"; iconPath: "qrc:/icons/creative.svg" }
+        ListElement {
+            name: "Dashboard"
+            iconPath: "qrc:/icons/dashboard.svg"
+        }
+        ListElement {
+            name: "Agents"
+            iconPath: "qrc:/icons/agents.svg"
+        }
+        ListElement {
+            name: "Calendar"
+            iconPath: "qrc:/icons/calendar.svg"
+        }
+        ListElement {
+            name: "Cron"
+            iconPath: "qrc:/icons/clock.svg"
+        }
+        ListElement {
+            name: "Memory"
+            iconPath: "qrc:/icons/memory.svg"
+        }
+        ListElement {
+            name: "Models"
+            iconPath: "qrc:/icons/models.svg"
+        }
+        ListElement {
+            name: "Packages"
+            iconPath: "qrc:/icons/package.svg"
+        }
+        ListElement {
+            name: "Git"
+            iconPath: "qrc:/icons/git-branch.svg"
+        }
+        ListElement {
+            name: "Creative"
+            iconPath: "qrc:/icons/creative.svg"
+        }
     }
 
     ListModel {
         id: allViewsModel
-        ListElement { name: "Dashboard" }
-        ListElement { name: "Agents" }
-        ListElement { name: "Calendar" }
-        ListElement { name: "Cron" }
-        ListElement { name: "Memory" }
-        ListElement { name: "Models" }
-        ListElement { name: "Packages" }
-        ListElement { name: "Git" }
-        ListElement { name: "Creative" }
-        ListElement { name: "Settings" }
+        ListElement {
+            name: "Dashboard"
+        }
+        ListElement {
+            name: "Agents"
+        }
+        ListElement {
+            name: "Calendar"
+        }
+        ListElement {
+            name: "Cron"
+        }
+        ListElement {
+            name: "Memory"
+        }
+        ListElement {
+            name: "Models"
+        }
+        ListElement {
+            name: "Packages"
+        }
+        ListElement {
+            name: "Git"
+        }
+        ListElement {
+            name: "Creative"
+        }
+        ListElement {
+            name: "Settings"
+        }
     }
 
     ListView {
@@ -90,10 +137,17 @@ ApplicationWindow {
         model: agents.agents
     }
 
-    RadarGrid { anchors.fill: parent }
+    RadarGrid {
+        anchors.fill: parent
+    }
 
     RowLayout {
-        anchors { left: parent.left; right: parent.right; top: parent.top; bottom: statusBar.top }
+        anchors {
+            left: parent.left
+            right: parent.right
+            top: parent.top
+            bottom: statusBar.top
+        }
         spacing: 0
 
         Rectangle {
@@ -107,33 +161,72 @@ ApplicationWindow {
             clip: true
 
             Behavior on animatedWidth {
-                NumberAnimation { duration: Motion.sidebarCollapse; easing.type: Motion.sidebarCollapseEasing }
+                NumberAnimation {
+                    duration: Motion.sidebarCollapse
+                    easing.type: Motion.sidebarCollapseEasing
+                }
             }
 
             Item {
                 id: wordmark
-                anchors { left: parent.left; right: parent.right; top: parent.top }
+                anchors {
+                    left: parent.left
+                    right: parent.right
+                    top: parent.top
+                }
                 height: Theme.topBarHeight + Theme.space.xl
                 Accessible.name: qsTr("AEGIS Mission Control home")
                 Accessible.role: Accessible.Button
 
                 Row {
-                    anchors { left: parent.left; leftMargin: Theme.space.lg; verticalCenter: parent.verticalCenter }
+                    anchors {
+                        left: parent.left
+                        leftMargin: Theme.space.lg
+                        verticalCenter: parent.verticalCenter
+                    }
                     spacing: Theme.space.md
-                    Image { width: Theme.wordmarkIconSize; height: width; source: "qrc:/icons/aegis.svg"; sourceSize.width: width; sourceSize.height: height }
+                    Image {
+                        width: Theme.wordmarkIconSize
+                        height: width
+                        source: "qrc:/icons/aegis.svg"
+                        sourceSize.width: width
+                        sourceSize.height: height
+                    }
                     Column {
                         visible: root.sidebarExpanded
                         spacing: Theme.space.xs
-                        Text { text: qsTr("AEGIS"); color: Theme.accent; font.family: Typography.heading.family; font.pixelSize: Typography.heading.pixelSize; font.weight: Font.Bold; font.letterSpacing: Theme.wordmarkTracking }
-                        Text { text: qsTr("MISSION CONTROL"); color: Theme.textMuted; font.family: Typography.caption.family; font.pixelSize: Typography.caption.pixelSize; font.weight: Typography.caption.weight; font.letterSpacing: Theme.eyebrowTracking }
+                        Text {
+                            text: qsTr("AEGIS")
+                            color: Theme.accent
+                            font.family: Typography.heading.family
+                            font.pixelSize: Typography.heading.pixelSize
+                            font.weight: Font.Bold
+                            font.letterSpacing: Theme.wordmarkTracking
+                        }
+                        Text {
+                            text: qsTr("MISSION CONTROL")
+                            color: Theme.textMuted
+                            font.family: Typography.caption.family
+                            font.pixelSize: Typography.caption.pixelSize
+                            font.weight: Typography.caption.weight
+                            font.letterSpacing: Theme.eyebrowTracking
+                        }
                     }
                 }
-                TapHandler { onTapped: root.selectView(0) }
+                TapHandler {
+                    onTapped: root.selectView(0)
+                }
             }
 
             Column {
                 id: navigationColumn
-                anchors { left: parent.left; right: parent.right; top: wordmark.bottom; leftMargin: Theme.space.sm; rightMargin: Theme.space.sm }
+                anchors {
+                    left: parent.left
+                    right: parent.right
+                    top: wordmark.bottom
+                    leftMargin: Theme.space.sm
+                    rightMargin: Theme.space.sm
+                }
                 spacing: Theme.space.xs
 
                 Repeater {
@@ -155,9 +248,18 @@ ApplicationWindow {
             }
 
             Column {
-                anchors { left: parent.left; right: parent.right; bottom: parent.bottom; margins: Theme.space.sm }
+                anchors {
+                    left: parent.left
+                    right: parent.right
+                    bottom: parent.bottom
+                    margins: Theme.space.sm
+                }
                 spacing: Theme.space.xs
-                Rectangle { width: parent.width; height: Theme.borderWidth; color: Theme.divider }
+                Rectangle {
+                    width: parent.width
+                    height: Theme.borderWidth
+                    color: Theme.divider
+                }
                 SidebarItem {
                     width: parent.width
                     label: qsTr("Settings")
@@ -189,7 +291,11 @@ ApplicationWindow {
                 border.color: Theme.divider
 
                 RowLayout {
-                    anchors { fill: parent; leftMargin: Theme.space.xl; rightMargin: Theme.space.lg }
+                    anchors {
+                        fill: parent
+                        leftMargin: Theme.space.xl
+                        rightMargin: Theme.space.lg
+                    }
                     spacing: Theme.space.md
                     Text {
                         Layout.fillWidth: true
@@ -224,23 +330,49 @@ ApplicationWindow {
                 Layout.margins: Theme.viewPadding
                 currentIndex: app.activeView
 
-                DashboardView { id: dashboardView }
-                AgentRosterView { id: agentRosterView }
-                CalendarView { id: calendarView }
-                CronView { id: cronView }
-                MemoryView { id: memoryView }
-                ModelView { id: modelView }
-                PackagesView { id: packagesView }
-                GitView { id: gitView; onOpenSettingsRequested: root.selectView(9) }
-                CreativeView { id: creativeView }
-                SettingsView { id: settingsView }
+                DashboardView {
+                    id: dashboardView
+                    onOpenAgentsRequested: root.selectView(1)
+                }
+                AgentRosterView {
+                    id: agentRosterView
+                }
+                CalendarView {
+                    id: calendarView
+                }
+                CronView {
+                    id: cronView
+                }
+                MemoryView {
+                    id: memoryView
+                }
+                ModelView {
+                    id: modelView
+                }
+                PackagesView {
+                    id: packagesView
+                }
+                GitView {
+                    id: gitView
+                    onOpenSettingsRequested: root.selectView(9)
+                }
+                CreativeView {
+                    id: creativeView
+                }
+                SettingsView {
+                    id: settingsView
+                }
             }
         }
     }
 
     StatusBar {
         id: statusBar
-        anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
+        anchors {
+            left: parent.left
+            right: parent.right
+            bottom: parent.bottom
+        }
         connectionState: root.connectionKey()
         connectionLabel: root.connectionLabel()
         activeAgents: agents.activeCount

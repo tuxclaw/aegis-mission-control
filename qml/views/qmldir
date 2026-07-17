@@ -1,0 +1,11 @@
+module Aegis.Views
+DashboardView 1.0 DashboardView.qml
+AgentRosterView 1.0 AgentRosterView.qml
+CalendarView 1.0 CalendarView.qml
+CronView 1.0 CronView.qml
+MemoryView 1.0 MemoryView.qml
+ModelView 1.0 ModelView.qml
+PackagesView 1.0 PackagesView.qml
+GitView 1.0 GitView.qml
+CreativeView 1.0 CreativeView.qml
+SettingsView 1.0 SettingsView.qml

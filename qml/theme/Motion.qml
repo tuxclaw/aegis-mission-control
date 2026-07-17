@@ -16,6 +16,7 @@ QtObject {
     readonly property int sweep: reduceMotion ? instant : 24000
     readonly property int breathe: reduceMotion ? instant : 2000
     readonly property int shimmer: reduceMotion ? instant : 1200
+    readonly property int stagger: reduceMotion ? instant : 40
 
     readonly property int fastEasing: Easing.OutQuad
     readonly property int standardEasing: Easing.OutCubic

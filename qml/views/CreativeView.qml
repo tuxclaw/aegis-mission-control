@@ -32,19 +32,22 @@ Item {
         }
         errorMessage = "";
         outputBaseLength = 0;
-        creative.generate(backendSelector.currentIndex === 0 ? CreativeBackend.Ollama : CreativeBackend.GatewayCreative,
-                          String(modelSelector.currentValue), prompt, temperatureSlider.value, tokenBox.value);
+        creative.generate(backendSelector.currentIndex === 0 ? CreativeBackend.Ollama : CreativeBackend.GatewayCreative, String(modelSelector.currentValue), prompt, temperatureSlider.value, tokenBox.value);
     }
 
     Connections {
         target: creative
-        function onOutputChanged() { outputText.cursorPosition = outputText.length; }
+        function onOutputChanged() {
+            outputText.cursorPosition = outputText.length;
+        }
         function onErrorRaised(message, canRetry) {
             root.errorMessage = message;
             root.retryable = canRetry;
             ToastHost.error(message);
         }
-        function onToast(message, level) { ToastHost.show(message, level); }
+        function onToast(message, level) {
+            ToastHost.show(message, level);
+        }
     }
 
     RowLayout {
@@ -53,6 +56,7 @@ Item {
 
         GlassCard {
             title: qsTr("CONFIG")
+            enterDelay: 0
             Layout.preferredWidth: Math.max(Theme.splitPaneMinimumWidth, root.width * 0.36)
             Layout.fillHeight: true
 
@@ -65,14 +69,26 @@ Item {
                     width: parent.width
                     spacing: Theme.space.lg
 
-                    Text { text: qsTr("BACKEND"); color: Theme.textMuted; font.family: Typography.caption.family; font.pixelSize: Typography.caption.pixelSize; font.weight: Typography.caption.weight }
+                    Text {
+                        text: qsTr("BACKEND")
+                        color: Theme.textMuted
+                        font.family: Typography.caption.family
+                        font.pixelSize: Typography.caption.pixelSize
+                        font.weight: Typography.caption.weight
+                    }
                     ComboBox {
                         id: backendSelector
                         Layout.fillWidth: true
                         model: [qsTr("Ollama"), qsTr("Gateway")]
                         Accessible.name: qsTr("Creative backend")
                     }
-                    Text { text: qsTr("MODEL"); color: Theme.textMuted; font.family: Typography.caption.family; font.pixelSize: Typography.caption.pixelSize; font.weight: Typography.caption.weight }
+                    Text {
+                        text: qsTr("MODEL")
+                        color: Theme.textMuted
+                        font.family: Typography.caption.family
+                        font.pixelSize: Typography.caption.pixelSize
+                        font.weight: Typography.caption.weight
+                    }
                     ComboBox {
                         id: modelSelector
                         Layout.fillWidth: true
@@ -83,9 +99,23 @@ Item {
                     }
                     RowLayout {
                         Layout.fillWidth: true
-                        Text { text: qsTr("TEMPERATURE"); color: Theme.textMuted; font.family: Typography.caption.family; font.pixelSize: Typography.caption.pixelSize; font.weight: Typography.caption.weight }
-                        Item { Layout.fillWidth: true }
-                        Text { text: temperatureSlider.value.toFixed(1); color: Theme.accent; font.family: Typography.dataSmall.family; font.pixelSize: Typography.dataSmall.pixelSize; font.weight: Typography.dataSmall.weight }
+                        Text {
+                            text: qsTr("TEMPERATURE")
+                            color: Theme.textMuted
+                            font.family: Typography.caption.family
+                            font.pixelSize: Typography.caption.pixelSize
+                            font.weight: Typography.caption.weight
+                        }
+                        Item {
+                            Layout.fillWidth: true
+                        }
+                        Text {
+                            text: temperatureSlider.value.toFixed(1)
+                            color: Theme.accent
+                            font.family: Typography.dataSmall.family
+                            font.pixelSize: Typography.dataSmall.pixelSize
+                            font.weight: Typography.dataSmall.weight
+                        }
                     }
                     Slider {
                         id: temperatureSlider
@@ -98,7 +128,14 @@ Item {
                     }
                     RowLayout {
                         Layout.fillWidth: true
-                        Text { Layout.fillWidth: true; text: qsTr("MAX TOKENS"); color: Theme.textMuted; font.family: Typography.caption.family; font.pixelSize: Typography.caption.pixelSize; font.weight: Typography.caption.weight }
+                        Text {
+                            Layout.fillWidth: true
+                            text: qsTr("MAX TOKENS")
+                            color: Theme.textMuted
+                            font.family: Typography.caption.family
+                            font.pixelSize: Typography.caption.pixelSize
+                            font.weight: Typography.caption.weight
+                        }
                         SpinBox {
                             id: tokenBox
                             from: 1
@@ -108,7 +145,13 @@ Item {
                             Accessible.name: qsTr("Maximum output tokens")
                         }
                     }
-                    Text { text: qsTr("PROMPT"); color: Theme.textMuted; font.family: Typography.caption.family; font.pixelSize: Typography.caption.pixelSize; font.weight: Typography.caption.weight }
+                    Text {
+                        text: qsTr("PROMPT")
+                        color: Theme.textMuted
+                        font.family: Typography.caption.family
+                        font.pixelSize: Typography.caption.pixelSize
+                        font.weight: Typography.caption.weight
+                    }
                     TextArea {
                         id: promptField
                         Layout.fillWidth: true
@@ -116,7 +159,8 @@ Item {
                         placeholderText: qsTr("What should AEGIS create?")
                         wrapMode: TextArea.Wrap
                         Accessible.name: qsTr("Creative prompt")
-                        onTextChanged: if (length > 8000) remove(8000, length)
+                        onTextChanged: if (length > 8000)
+                            remove(8000, length)
                     }
                     Text {
                         visible: root.errorMessage.length > 0
@@ -130,8 +174,20 @@ Item {
                     }
                     RowLayout {
                         Layout.fillWidth: true
-                        PrimaryButton { text: qsTr("Generate"); busy: creative.busy; enabled: !creative.busy; Accessible.name: qsTr("Generate creative output"); onClicked: root.generate() }
-                        SecondaryButton { text: qsTr("Cancel"); destructive: true; enabled: creative.busy; Accessible.name: qsTr("Cancel generation"); onClicked: creative.cancel() }
+                        PrimaryButton {
+                            text: qsTr("Generate")
+                            busy: creative.busy
+                            enabled: !creative.busy
+                            Accessible.name: qsTr("Generate creative output")
+                            onClicked: root.generate()
+                        }
+                        SecondaryButton {
+                            text: qsTr("Cancel")
+                            destructive: true
+                            enabled: creative.busy
+                            Accessible.name: qsTr("Cancel generation")
+                            onClicked: creative.cancel()
+                        }
                     }
                 }
             }
@@ -139,6 +195,7 @@ Item {
 
         GlassCard {
             title: qsTr("OUTPUT")
+            enterDelay: Motion.stagger
             Layout.fillWidth: true
             Layout.fillHeight: true
 
@@ -169,7 +226,7 @@ Item {
                 }
 
                 EmptyState {
-                    anchors.centerIn: parent
+                    Layout.alignment: Qt.AlignCenter
                     visible: root.visibleOutput.length === 0 && !creative.busy && root.errorMessage.length === 0
                     title: qsTr("No output yet")
                     detail: qsTr("Choose a live model and generate from a prompt.")
@@ -177,9 +234,23 @@ Item {
 
                 RowLayout {
                     Layout.fillWidth: true
-                    Text { text: qsTr("finish: %1").arg(creative.finishReason.length > 0 ? creative.finishReason : "—"); color: Theme.textMuted; font.family: Typography.dataSmall.family; font.pixelSize: Typography.dataSmall.pixelSize; font.weight: Typography.dataSmall.weight }
-                    Text { text: qsTr("out: %1 B").arg(creative.outputBytes); color: Theme.textMuted; font.family: Typography.dataSmall.family; font.pixelSize: Typography.dataSmall.pixelSize; font.weight: Typography.dataSmall.weight }
-                    Item { Layout.fillWidth: true }
+                    Text {
+                        text: qsTr("finish: %1").arg(creative.finishReason.length > 0 ? creative.finishReason : "—")
+                        color: Theme.textMuted
+                        font.family: Typography.dataSmall.family
+                        font.pixelSize: Typography.dataSmall.pixelSize
+                        font.weight: Typography.dataSmall.weight
+                    }
+                    Text {
+                        text: qsTr("out: %1 B").arg(creative.outputBytes)
+                        color: Theme.textMuted
+                        font.family: Typography.dataSmall.family
+                        font.pixelSize: Typography.dataSmall.pixelSize
+                        font.weight: Typography.dataSmall.weight
+                    }
+                    Item {
+                        Layout.fillWidth: true
+                    }
                     GhostButton {
                         text: qsTr("Copy")
                         enabled: root.visibleOutput.length > 0
@@ -202,7 +273,10 @@ Item {
         }
     }
 
-    LoadingState { anchors.fill: parent; visible: models.loading && modelSelector.count === 0 }
+    LoadingState {
+        anchors.fill: parent
+        visible: models.loading && modelSelector.count === 0
+    }
     ErrorState {
         anchors.centerIn: parent
         width: Math.min(parent.width - Theme.space.xxl, Theme.dialogWidth)

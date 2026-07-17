@@ -10,6 +10,8 @@ import "../components"
 Item {
     id: root
 
+    signal openAgentsRequested
+
     property string errorMessage: ""
     property bool retryable: false
     readonly property bool loading: agents.loading
@@ -38,6 +40,14 @@ Item {
         if (value === AgentStatus.Error)
             return StatusRing.Error;
         return StatusRing.Unknown;
+    }
+
+    function formatRate(bytes) {
+        if (bytes >= 1024 * 1024)
+            return qsTr("%1 MB/s").arg((bytes / (1024 * 1024)).toFixed(1));
+        if (bytes >= 1024)
+            return qsTr("%1 KB/s").arg((bytes / 1024).toFixed(1));
+        return qsTr("%1 B/s").arg(Math.round(bytes));
     }
 
     Connections {
@@ -69,17 +79,49 @@ Item {
                     GlassCard {
                         id: vitalCard
                         required property int index
+                        enterDelay: index * Motion.stagger
                         Layout.fillWidth: true
                         Layout.minimumWidth: Theme.minimumCardWidth
-                        Layout.preferredHeight: Theme.gaugeSize + Theme.cardPadding * 3
+                        Layout.preferredHeight: Theme.gaugeSize + Theme.skeletonRowHeight + Theme.cardPadding * 3
 
                         VitalGauge {
                             anchors.horizontalCenter: parent.horizontalCenter
                             label: vitalCard.index === 0 ? qsTr("CPU") : vitalCard.index === 1 ? qsTr("GPU") : vitalCard.index === 2 ? qsTr("Memory") : qsTr("Network")
-                            value: vitalCard.index === 0 ? vitals.cpuPct : vitalCard.index === 1 ? vitals.gpuPct : vitalCard.index === 2 ? vitals.memPct : vitals.netModel.count > 0 ? vitals.netModel.aggregatePct : Number.NaN
-                            available: vitalCard.index !== 1 || !Number.isNaN(vitals.gpuPct)
+                            value: vitalCard.index === 0 ? vitals.cpuPct : vitalCard.index === 1 ? vitals.gpuPct : vitalCard.index === 2 ? vitals.memPct : Number.NaN
+                            available: vitalCard.index === 1 ? !Number.isNaN(vitals.gpuPct) : vitalCard.index === 3 ? vitals.netModel !== null : true
                             subtext: vitalCard.index === 1 ? vitals.gpuVendor : vitalCard.index === 2 ? qsTr("%1 / %2").arg(vitals.memUsed).arg(vitals.memTotal) : vitalCard.index === 3 ? qsTr("live throughput") : qsTr("system load")
                             accentColor: vitalCard.index === 2 ? Theme.ok : Theme.accent
+                        }
+
+                        ListView {
+                            width: parent.width
+                            height: vitalCard.index === 3 ? Theme.skeletonRowHeight : 0
+                            visible: vitalCard.index === 3
+                            model: vitals.netModel
+                            clip: true
+                            delegate: RowLayout {
+                                id: networkRow
+                                required property string iface
+                                required property real rxBytesPerSec
+                                required property real txBytesPerSec
+                                width: ListView.view.width
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: networkRow.iface
+                                    color: Theme.textMuted
+                                    elide: Text.ElideRight
+                                    font.family: Typography.dataSmall.family
+                                    font.pixelSize: Typography.dataSmall.pixelSize
+                                    font.weight: Typography.dataSmall.weight
+                                }
+                                Text {
+                                    text: qsTr("↑ %1  ↓ %2").arg(root.formatRate(networkRow.txBytesPerSec)).arg(root.formatRate(networkRow.rxBytesPerSec))
+                                    color: Theme.textSecondary
+                                    font.family: Typography.dataSmall.family
+                                    font.pixelSize: Typography.dataSmall.pixelSize
+                                    font.weight: Typography.dataSmall.weight
+                                }
+                            }
                         }
                     }
                 }
@@ -93,6 +135,7 @@ Item {
 
                 GlassCard {
                     title: qsTr("DISKS")
+                    enterDelay: 4 * Motion.stagger
                     Layout.fillWidth: true
                     Layout.minimumWidth: Theme.splitPaneMinimumWidth
                     Layout.preferredHeight: Math.max(Theme.contentMinimumHeight, diskList.contentHeight + Theme.cardPadding * 2)
@@ -144,7 +187,12 @@ Item {
                                     height: parent.height
                                     radius: parent.radius
                                     color: diskRow.percent >= 90 ? Theme.alert : diskRow.percent >= 75 ? Theme.warn : Theme.ok
-                                    Behavior on width { NumberAnimation { duration: Motion.gauge; easing.type: Motion.gaugeEasing } }
+                                    Behavior on width {
+                                        NumberAnimation {
+                                            duration: Motion.gauge
+                                            easing.type: Motion.gaugeEasing
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -160,6 +208,7 @@ Item {
 
                 GlassCard {
                     title: qsTr("FLEET AT A GLANCE")
+                    enterDelay: 5 * Motion.stagger
                     Layout.fillWidth: true
                     Layout.minimumWidth: Theme.splitPaneMinimumWidth
                     Layout.preferredHeight: Math.max(Theme.contentMinimumHeight, fleetList.contentHeight + Theme.cardPadding * 2)
@@ -180,6 +229,8 @@ Item {
                             required property int status
                             width: fleetList.width
                             spacing: Theme.space.md
+                            Accessible.name: qsTr("Open agent roster for %1").arg(agentRow.displayName)
+                            Accessible.role: Accessible.Button
 
                             StatusRing {
                                 size: Theme.compactButtonSize
@@ -209,6 +260,9 @@ Item {
                                 font.family: Typography.dataSmall.family
                                 font.pixelSize: Typography.dataSmall.pixelSize
                                 font.weight: Typography.dataSmall.weight
+                            }
+                            TapHandler {
+                                onTapped: root.openAgentsRequested()
                             }
                         }
 

@@ -214,6 +214,8 @@ Item {
                         color: dayTap.hovered ? Theme.accentSoft : Theme.transparent
                         border.width: Theme.borderWidth
                         border.color: Theme.divider
+                        Accessible.name: qsTr("Create event on %1").arg(Qt.formatDate(dayCell.dateValue, "MMMM d"))
+                        Accessible.role: Accessible.Button
 
                         Rectangle {
                             anchors {
@@ -254,6 +256,7 @@ Item {
 
                             delegate: Rectangle {
                                 id: eventChip
+                                required property var model
                                 property string eventId: model.id
                                 required property string title
                                 required property var start
@@ -269,6 +272,8 @@ Item {
                                 radius: Theme.radiusControl
                                 color: root.paletteColor(eventChip.colorToken)
                                 opacity: onThisDay ? 1 : 0
+                                Accessible.name: qsTr("Edit event %1").arg(eventChip.title)
+                                Accessible.role: Accessible.Button
 
                                 Text {
                                     anchors {
@@ -290,8 +295,12 @@ Item {
                             }
                         }
 
-                        HoverHandler { id: dayTap }
-                        TapHandler { onTapped: root.openNewEditor(dayCell.dateValue) }
+                        HoverHandler {
+                            id: dayTap
+                        }
+                        TapHandler {
+                            onTapped: root.openNewEditor(dayCell.dateValue)
+                        }
                     }
                 }
             }
@@ -303,7 +312,11 @@ Item {
         visible: root.editorOpen
         color: Theme.modalBackdrop
         z: 20
-        TapHandler { onTapped: root.editorOpen = false }
+        Accessible.name: qsTr("Close event editor")
+        Accessible.role: Accessible.Button
+        TapHandler {
+            onTapped: root.editorOpen = false
+        }
     }
 
     GlassCard {
@@ -320,7 +333,10 @@ Item {
         title: root.selectedEventId.length > 0 ? qsTr("EDIT EVENT") : qsTr("NEW EVENT")
 
         Behavior on x {
-            NumberAnimation { duration: Motion.drawer; easing.type: Motion.drawerEasing }
+            NumberAnimation {
+                duration: Motion.drawer
+                easing.type: Motion.drawerEasing
+            }
         }
 
         ScrollView {
@@ -332,19 +348,57 @@ Item {
                 width: parent.width
                 spacing: Theme.space.md
 
-                TextField { id: titleField; Layout.fillWidth: true; placeholderText: qsTr("Title"); maximumLength: 200; Accessible.name: qsTr("Event title") }
-                RowLayout {
+                TextField {
+                    id: titleField
                     Layout.fillWidth: true
-                    TextField { id: startDateField; Layout.fillWidth: true; placeholderText: qsTr("Start date"); Accessible.name: qsTr("Start date") }
-                    TextField { id: startTimeField; Layout.preferredWidth: Theme.buttonMinWidth; enabled: !allDayBox.checked; placeholderText: qsTr("Time"); Accessible.name: qsTr("Start time") }
+                    placeholderText: qsTr("Title")
+                    maximumLength: 200
+                    Accessible.name: qsTr("Event title")
                 }
                 RowLayout {
                     Layout.fillWidth: true
-                    TextField { id: endDateField; Layout.fillWidth: true; placeholderText: qsTr("End date"); Accessible.name: qsTr("End date") }
-                    TextField { id: endTimeField; Layout.preferredWidth: Theme.buttonMinWidth; enabled: !allDayBox.checked; placeholderText: qsTr("Time"); Accessible.name: qsTr("End time") }
+                    TextField {
+                        id: startDateField
+                        Layout.fillWidth: true
+                        placeholderText: qsTr("Start date")
+                        Accessible.name: qsTr("Start date")
+                    }
+                    TextField {
+                        id: startTimeField
+                        Layout.preferredWidth: Theme.buttonMinWidth
+                        enabled: !allDayBox.checked
+                        placeholderText: qsTr("Time")
+                        Accessible.name: qsTr("Start time")
+                    }
                 }
-                CheckBox { id: allDayBox; text: qsTr("All day"); Accessible.name: qsTr("All-day event") }
-                TextField { id: locationField; Layout.fillWidth: true; placeholderText: qsTr("Location"); maximumLength: 200; Accessible.name: qsTr("Event location") }
+                RowLayout {
+                    Layout.fillWidth: true
+                    TextField {
+                        id: endDateField
+                        Layout.fillWidth: true
+                        placeholderText: qsTr("End date")
+                        Accessible.name: qsTr("End date")
+                    }
+                    TextField {
+                        id: endTimeField
+                        Layout.preferredWidth: Theme.buttonMinWidth
+                        enabled: !allDayBox.checked
+                        placeholderText: qsTr("Time")
+                        Accessible.name: qsTr("End time")
+                    }
+                }
+                CheckBox {
+                    id: allDayBox
+                    text: qsTr("All day")
+                    Accessible.name: qsTr("All-day event")
+                }
+                TextField {
+                    id: locationField
+                    Layout.fillWidth: true
+                    placeholderText: qsTr("Location")
+                    maximumLength: 200
+                    Accessible.name: qsTr("Event location")
+                }
                 Text {
                     text: qsTr("COLOR")
                     color: Theme.textMuted
@@ -365,11 +419,20 @@ Item {
                             border.color: root.selectedColor === modelData ? Theme.textPrimary : Theme.panelBorder
                             Accessible.name: qsTr("Use %1 event color").arg(modelData)
                             Accessible.role: Accessible.Button
-                            TapHandler { onTapped: root.selectedColor = modelData }
+                            TapHandler {
+                                onTapped: root.selectedColor = modelData
+                            }
                         }
                     }
                 }
-                TextArea { id: notesField; Layout.fillWidth: true; Layout.minimumHeight: Theme.textAreaMinimumHeight; placeholderText: qsTr("Notes"); wrapMode: TextArea.Wrap; Accessible.name: qsTr("Event notes") }
+                TextArea {
+                    id: notesField
+                    Layout.fillWidth: true
+                    Layout.minimumHeight: Theme.textAreaMinimumHeight
+                    placeholderText: qsTr("Notes")
+                    wrapMode: TextArea.Wrap
+                    Accessible.name: qsTr("Event notes")
+                }
                 Text {
                     id: inlineError
                     Layout.fillWidth: true
@@ -382,7 +445,11 @@ Item {
                 }
                 RowLayout {
                     Layout.fillWidth: true
-                    GhostButton { text: qsTr("Cancel"); Accessible.name: qsTr("Cancel event editing"); onClicked: root.editorOpen = false }
+                    GhostButton {
+                        text: qsTr("Cancel")
+                        Accessible.name: qsTr("Cancel event editing")
+                        onClicked: root.editorOpen = false
+                    }
                     GhostButton {
                         visible: root.selectedEventId.length > 0
                         destructive: true
@@ -390,14 +457,24 @@ Item {
                         Accessible.name: qsTr("Delete event")
                         onClicked: deleteDialog.open()
                     }
-                    Item { Layout.fillWidth: true }
-                    PrimaryButton { text: qsTr("Save Event"); busy: root.saving; Accessible.name: qsTr("Save event"); onClicked: root.saveEvent() }
+                    Item {
+                        Layout.fillWidth: true
+                    }
+                    PrimaryButton {
+                        text: qsTr("Save Event")
+                        busy: root.saving
+                        Accessible.name: qsTr("Save event")
+                        onClicked: root.saveEvent()
+                    }
                 }
             }
         }
     }
 
-    LoadingState { anchors.fill: parent; visible: calendar.loading }
+    LoadingState {
+        anchors.fill: parent
+        visible: calendar.loading
+    }
     EmptyState {
         anchors.centerIn: parent
         visible: !calendar.loading && eventCounter.count === 0 && root.errorMessage.length === 0 && !root.editorOpen

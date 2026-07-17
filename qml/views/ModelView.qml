@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Effects
 import "../theme"
@@ -84,6 +83,8 @@ Item {
 
             delegate: Item {
                 id: modelCell
+                required property int index
+                required property var model
                 property string modelId: model.id
                 required property string provider
                 required property string label
@@ -113,6 +114,7 @@ Item {
                         margins: modelCell.activeCard ? Theme.borderWidth : 0
                     }
                     interactive: !modelCell.activeCard
+                    enterDelay: (index + 1) * Motion.stagger
 
                     ColumnLayout {
                         width: parent.width
@@ -120,21 +122,53 @@ Item {
 
                         RowLayout {
                             Layout.fillWidth: true
-                            Text { text: "⬢"; color: modelCell.activeCard ? Theme.accent : Theme.textSecondary; font.family: Typography.heading.family; font.pixelSize: Typography.heading.pixelSize; font.weight: Typography.heading.weight }
-                            Text { Layout.fillWidth: true; text: modelCell.label.length > 0 ? modelCell.label : modelCell.modelId; color: Theme.textPrimary; elide: Text.ElideMiddle; font.family: Typography.heading.family; font.pixelSize: Typography.heading.pixelSize; font.weight: Typography.heading.weight }
+                            Text {
+                                text: "⬢"
+                                color: modelCell.activeCard ? Theme.accent : Theme.textSecondary
+                                font.family: Typography.heading.family
+                                font.pixelSize: Typography.heading.pixelSize
+                                font.weight: Typography.heading.weight
+                            }
+                            Text {
+                                Layout.fillWidth: true
+                                text: modelCell.label.length > 0 ? modelCell.label : modelCell.modelId
+                                color: Theme.textPrimary
+                                elide: Text.ElideMiddle
+                                font.family: Typography.heading.family
+                                font.pixelSize: Typography.heading.pixelSize
+                                font.weight: Typography.heading.weight
+                            }
                             Rectangle {
                                 visible: modelCell.activeCard
-                                width: activeLabel.implicitWidth + Theme.space.lg
-                                height: Theme.chipHeight
+                                Layout.preferredWidth: activeLabel.implicitWidth + Theme.space.lg
+                                Layout.preferredHeight: Theme.chipHeight
                                 radius: Theme.radiusPill
                                 color: Theme.accentSoft
-                                Text { id: activeLabel; anchors.centerIn: parent; text: qsTr("ACTIVE"); color: Theme.accent; font.family: Typography.caption.family; font.pixelSize: Typography.caption.pixelSize; font.weight: Typography.caption.weight }
+                                Text {
+                                    id: activeLabel
+                                    anchors.centerIn: parent
+                                    text: qsTr("ACTIVE")
+                                    color: Theme.accent
+                                    font.family: Typography.caption.family
+                                    font.pixelSize: Typography.caption.pixelSize
+                                    font.weight: Typography.caption.weight
+                                }
                             }
                         }
-                        Text { Layout.fillWidth: true; text: modelCell.provider; color: Theme.textSecondary; elide: Text.ElideRight; font.family: Typography.dataSmall.family; font.pixelSize: Typography.dataSmall.pixelSize; font.weight: Typography.dataSmall.weight }
+                        Text {
+                            Layout.fillWidth: true
+                            text: modelCell.provider
+                            color: Theme.textSecondary
+                            elide: Text.ElideRight
+                            font.family: Typography.dataSmall.family
+                            font.pixelSize: Typography.dataSmall.pixelSize
+                            font.weight: Typography.dataSmall.weight
+                        }
                         RowLayout {
                             Layout.fillWidth: true
-                            Item { Layout.fillWidth: true }
+                            Item {
+                                Layout.fillWidth: true
+                            }
                             SecondaryButton {
                                 visible: !modelCell.activeCard
                                 text: qsTr("Set active")
@@ -159,7 +193,10 @@ Item {
         }
     }
 
-    LoadingState { anchors.fill: parent; visible: models.loading && modelGrid.count === 0 }
+    LoadingState {
+        anchors.fill: parent
+        visible: models.loading && modelGrid.count === 0
+    }
     ErrorState {
         anchors.centerIn: parent
         width: Math.min(parent.width - Theme.space.xxl, Theme.dialogWidth)

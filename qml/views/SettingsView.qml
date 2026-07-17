@@ -159,6 +159,7 @@ Item {
 
             GlassCard {
                 title: qsTr("GATEWAY")
+                enterDelay: 0
                 Layout.fillWidth: true
 
                 ColumnLayout {
@@ -166,12 +167,21 @@ Item {
                     spacing: Theme.space.md
                     RowLayout {
                         Layout.fillWidth: true
-                        FormLabel { text: qsTr("Base URL") }
-                        TextField { id: gatewayUrlField; Layout.fillWidth: true; placeholderText: qsTr("Gateway base URL"); Accessible.name: qsTr("Gateway base URL") }
+                        FormLabel {
+                            text: qsTr("Base URL")
+                        }
+                        TextField {
+                            id: gatewayUrlField
+                            Layout.fillWidth: true
+                            placeholderText: qsTr("Gateway base URL")
+                            Accessible.name: qsTr("Gateway base URL")
+                        }
                     }
                     RowLayout {
                         Layout.fillWidth: true
-                        FormLabel { text: qsTr("Gateway token") }
+                        FormLabel {
+                            text: qsTr("Gateway token")
+                        }
                         TextField {
                             id: gatewayTokenField
                             Layout.fillWidth: true
@@ -179,19 +189,38 @@ Item {
                             placeholderText: settings.gatewayTokenSet ? qsTr("Credential set") : qsTr("Credential not set")
                             Accessible.name: qsTr("New gateway token")
                         }
-                        SecondaryButton { text: qsTr("Update token"); Accessible.name: qsTr("Update gateway token"); onClicked: root.updateGatewayToken() }
+                        SecondaryButton {
+                            text: qsTr("Update token")
+                            Accessible.name: qsTr("Update gateway token")
+                            onClicked: root.updateGatewayToken()
+                        }
                     }
                     RowLayout {
                         Layout.fillWidth: true
-                        FormLabel { text: qsTr("Status") }
-                        Rectangle { width: Theme.statusDotSize; height: width; radius: width / 2; color: root.connectionColor() }
-                        Text { Layout.fillWidth: true; text: root.connectionText(); color: root.connectionColor(); font.family: Typography.dataSmall.family; font.pixelSize: Typography.dataSmall.pixelSize; font.weight: Typography.dataSmall.weight }
+                        FormLabel {
+                            text: qsTr("Status")
+                        }
+                        Rectangle {
+                            Layout.preferredWidth: Theme.statusDotSize
+                            Layout.preferredHeight: Theme.statusDotSize
+                            radius: width / 2
+                            color: root.connectionColor()
+                        }
+                        Text {
+                            Layout.fillWidth: true
+                            text: root.connectionText()
+                            color: root.connectionColor()
+                            font.family: Typography.dataSmall.family
+                            font.pixelSize: Typography.dataSmall.pixelSize
+                            font.weight: Typography.dataSmall.weight
+                        }
                     }
                 }
             }
 
             GlassCard {
                 title: qsTr("GIT")
+                enterDelay: Motion.stagger
                 Layout.fillWidth: true
 
                 ColumnLayout {
@@ -199,20 +228,46 @@ Item {
                     spacing: Theme.space.md
                     RowLayout {
                         Layout.fillWidth: true
-                        FormLabel { text: qsTr("Repo path") }
-                        TextField { id: gitPathField; Layout.fillWidth: true; placeholderText: qsTr("Git worktree path"); Accessible.name: qsTr("Git repository path") }
-                        GhostButton { text: qsTr("Browse"); Accessible.name: qsTr("Browse for Git worktree"); onClicked: repoFolderDialog.open() }
+                        FormLabel {
+                            text: qsTr("Repo path")
+                        }
+                        TextField {
+                            id: gitPathField
+                            Layout.fillWidth: true
+                            placeholderText: qsTr("Git worktree path")
+                            Accessible.name: qsTr("Git repository path")
+                        }
+                        GhostButton {
+                            text: qsTr("Browse")
+                            Accessible.name: qsTr("Browse for Git worktree")
+                            onClicked: repoFolderDialog.open()
+                        }
                     }
                     RowLayout {
                         Layout.fillWidth: true
-                        FormLabel { text: qsTr("Remote") }
-                        TextField { id: remoteField; Layout.fillWidth: true; Accessible.name: qsTr("Git remote name") }
-                        FormLabel { Layout.preferredWidth: implicitWidth; text: qsTr("Pull mode") }
-                        ComboBox { id: pullModeBox; model: ["ff-only"]; Accessible.name: qsTr("Git pull mode") }
+                        FormLabel {
+                            text: qsTr("Remote")
+                        }
+                        TextField {
+                            id: remoteField
+                            Layout.fillWidth: true
+                            Accessible.name: qsTr("Git remote name")
+                        }
+                        FormLabel {
+                            Layout.preferredWidth: implicitWidth
+                            text: qsTr("Pull mode")
+                        }
+                        ComboBox {
+                            id: pullModeBox
+                            model: ["ff-only"]
+                            Accessible.name: qsTr("Git pull mode")
+                        }
                     }
                     RowLayout {
                         Layout.fillWidth: true
-                        FormLabel { text: qsTr("Credential") }
+                        FormLabel {
+                            text: qsTr("Credential")
+                        }
                         TextField {
                             id: gitCredentialField
                             Layout.fillWidth: true
@@ -243,6 +298,7 @@ Item {
 
             GlassCard {
                 title: qsTr("MEMORY ROOTS")
+                enterDelay: 2 * Motion.stagger
                 Layout.fillWidth: true
 
                 ColumnLayout {
@@ -253,45 +309,133 @@ Item {
                         RowLayout {
                             required property string modelData
                             Layout.fillWidth: true
-                            Text { Layout.preferredWidth: Theme.settingsLabelWidth; text: modelData; color: Theme.accent; elide: Text.ElideRight; font.family: Typography.dataSmall.family; font.pixelSize: Typography.dataSmall.pixelSize; font.weight: Typography.dataSmall.weight }
-                            Text { Layout.fillWidth: true; text: root.pendingMemoryRoots[modelData]; color: Theme.textSecondary; elide: Text.ElideMiddle; font.family: Typography.dataSmall.family; font.pixelSize: Typography.dataSmall.pixelSize; font.weight: Typography.dataSmall.weight }
+                            Text {
+                                Layout.preferredWidth: Theme.settingsLabelWidth
+                                text: modelData
+                                color: Theme.accent
+                                elide: Text.ElideRight
+                                font.family: Typography.dataSmall.family
+                                font.pixelSize: Typography.dataSmall.pixelSize
+                                font.weight: Typography.dataSmall.weight
+                            }
+                            Text {
+                                Layout.fillWidth: true
+                                text: root.pendingMemoryRoots[modelData]
+                                color: Theme.textSecondary
+                                elide: Text.ElideMiddle
+                                font.family: Typography.dataSmall.family
+                                font.pixelSize: Typography.dataSmall.pixelSize
+                                font.weight: Typography.dataSmall.weight
+                            }
                         }
                     }
-                    EmptyState { Layout.fillWidth: true; visible: Object.keys(root.pendingMemoryRoots).length === 0; title: qsTr("No memory roots"); detail: qsTr("Add an allowlisted root before using Memory.") }
+                    EmptyState {
+                        Layout.fillWidth: true
+                        visible: Object.keys(root.pendingMemoryRoots).length === 0
+                        title: qsTr("No memory roots")
+                        detail: qsTr("Add an allowlisted root before using Memory.")
+                    }
                     RowLayout {
                         Layout.fillWidth: true
-                        TextField { id: rootIdField; Layout.preferredWidth: Theme.settingsLabelWidth; placeholderText: qsTr("Root ID"); Accessible.name: qsTr("New memory root ID") }
-                        TextField { id: rootPathField; Layout.fillWidth: true; placeholderText: qsTr("Allowlisted path"); Accessible.name: qsTr("New memory root path") }
-                        GhostButton { text: qsTr("+ Add"); Accessible.name: qsTr("Add memory root"); onClicked: root.addMemoryRoot() }
+                        TextField {
+                            id: rootIdField
+                            Layout.preferredWidth: Theme.settingsLabelWidth
+                            placeholderText: qsTr("Root ID")
+                            Accessible.name: qsTr("New memory root ID")
+                        }
+                        TextField {
+                            id: rootPathField
+                            Layout.fillWidth: true
+                            placeholderText: qsTr("Allowlisted path")
+                            Accessible.name: qsTr("New memory root path")
+                        }
+                        GhostButton {
+                            text: qsTr("+ Add")
+                            Accessible.name: qsTr("Add memory root")
+                            onClicked: root.addMemoryRoot()
+                        }
                     }
                 }
             }
 
             GlassCard {
                 title: qsTr("SYSTEM & APPEARANCE")
+                enterDelay: 3 * Motion.stagger
                 Layout.fillWidth: true
 
                 ColumnLayout {
                     width: parent.width
                     spacing: Theme.space.md
-                    RowLayout { Layout.fillWidth: true; FormLabel { text: qsTr("Data root") }; TextField { id: dataRootField; Layout.fillWidth: true; Accessible.name: qsTr("AEGIS data root") } }
-                    RowLayout { Layout.fillWidth: true; FormLabel { text: qsTr("Ollama URL") }; TextField { id: ollamaUrlField; Layout.fillWidth: true; Accessible.name: qsTr("Ollama base URL") } }
                     RowLayout {
                         Layout.fillWidth: true
-                        FormLabel { text: qsTr("Vitals interval") }
-                        SpinBox { id: vitalsIntervalBox; from: 250; to: 10000; editable: true; Accessible.name: qsTr("Vitals interval milliseconds") }
-                        Text { Layout.fillWidth: true; text: qsTr("ms"); color: Theme.textMuted; font.family: Typography.dataSmall.family; font.pixelSize: Typography.dataSmall.pixelSize; font.weight: Typography.dataSmall.weight }
+                        FormLabel {
+                            text: qsTr("Data root")
+                        }
+                        TextField {
+                            id: dataRootField
+                            Layout.fillWidth: true
+                            Accessible.name: qsTr("AEGIS data root")
+                        }
                     }
                     RowLayout {
                         Layout.fillWidth: true
-                        FormLabel { text: qsTr("Appearance") }
-                        ComboBox { id: themeBox; model: [qsTr("Dark"), qsTr("Light")]; Accessible.name: qsTr("Application theme") }
-                        CheckBox { id: reduceMotionBox; text: qsTr("Reduce motion"); Accessible.name: qsTr("Reduce interface motion"); onToggled: Motion.reduceMotion = checked }
+                        FormLabel {
+                            text: qsTr("Ollama URL")
+                        }
+                        TextField {
+                            id: ollamaUrlField
+                            Layout.fillWidth: true
+                            Accessible.name: qsTr("Ollama base URL")
+                        }
                     }
                     RowLayout {
                         Layout.fillWidth: true
-                        FormLabel { text: qsTr("Logging") }
-                        ComboBox { id: logLevelBox; model: ["error", "warn", "info", "debug"]; Accessible.name: qsTr("Logging level") }
+                        FormLabel {
+                            text: qsTr("Vitals interval")
+                        }
+                        SpinBox {
+                            id: vitalsIntervalBox
+                            from: 250
+                            to: 10000
+                            editable: true
+                            Accessible.name: qsTr("Vitals interval milliseconds")
+                        }
+                        Text {
+                            Layout.fillWidth: true
+                            text: qsTr("ms")
+                            color: Theme.textMuted
+                            font.family: Typography.dataSmall.family
+                            font.pixelSize: Typography.dataSmall.pixelSize
+                            font.weight: Typography.dataSmall.weight
+                        }
+                    }
+                    RowLayout {
+                        Layout.fillWidth: true
+                        FormLabel {
+                            text: qsTr("Appearance")
+                        }
+                        ComboBox {
+                            id: themeBox
+                            model: [qsTr("Dark"), qsTr("Light")]
+                            Accessible.name: qsTr("Application theme")
+                        }
+                        CheckBox {
+                            id: reduceMotionBox
+                            text: qsTr("Reduce motion")
+                            Accessible.name: qsTr("Reduce interface motion")
+                            onToggled: Motion.reduceMotion = checked
+                        }
+                    }
+                    RowLayout {
+                        Layout.fillWidth: true
+                        FormLabel {
+                            text: qsTr("Logging")
+                        }
+                        ComboBox {
+                            id: logLevelBox
+                            model: ["error", "warn", "info", "debug"]
+                            Accessible.name: qsTr("Logging level")
+                        }
                     }
                 }
             }
@@ -308,14 +452,29 @@ Item {
             }
             RowLayout {
                 Layout.fillWidth: true
-                GhostButton { text: qsTr("Reset defaults"); destructive: true; Accessible.name: qsTr("Reset settings to defaults"); onClicked: resetDialog.open() }
-                Item { Layout.fillWidth: true }
-                PrimaryButton { text: qsTr("Save Settings"); busy: root.busy; Accessible.name: qsTr("Save settings"); onClicked: root.saveSettings() }
+                GhostButton {
+                    text: qsTr("Reset defaults")
+                    destructive: true
+                    Accessible.name: qsTr("Reset settings to defaults")
+                    onClicked: resetDialog.open()
+                }
+                Item {
+                    Layout.fillWidth: true
+                }
+                PrimaryButton {
+                    text: qsTr("Save Settings")
+                    busy: root.busy
+                    Accessible.name: qsTr("Save settings")
+                    onClicked: root.saveSettings()
+                }
             }
         }
     }
 
-    LoadingState { anchors.fill: parent; visible: root.busy }
+    LoadingState {
+        anchors.fill: parent
+        visible: root.busy
+    }
     ErrorState {
         anchors.centerIn: parent
         width: Math.min(parent.width - Theme.space.xxl, Theme.dialogWidth)

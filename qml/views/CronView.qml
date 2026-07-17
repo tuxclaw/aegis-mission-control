@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Controls
 import QtQuick.Layouts
 import Aegis 1.0
 import "../theme"
@@ -59,14 +58,61 @@ Item {
                 border.color: Theme.divider
 
                 RowLayout {
-                    anchors { fill: parent; leftMargin: Theme.space.lg; rightMargin: Theme.space.lg }
+                    anchors {
+                        fill: parent
+                        leftMargin: Theme.space.lg
+                        rightMargin: Theme.space.lg
+                    }
                     spacing: Theme.space.md
-                    Text { Layout.preferredWidth: parent.width * 0.25; text: qsTr("NAME"); color: Theme.textMuted; font: Typography.caption }
-                    Text { Layout.preferredWidth: parent.width * 0.18; text: qsTr("SCHEDULE"); color: Theme.textMuted; font: Typography.caption }
-                    Text { Layout.preferredWidth: parent.width * 0.12; text: qsTr("STATE"); color: Theme.textMuted; font: Typography.caption }
-                    Text { Layout.preferredWidth: parent.width * 0.17; text: qsTr("LAST RUN"); color: Theme.textMuted; font: Typography.caption }
-                    Text { Layout.fillWidth: true; text: qsTr("NEXT RUN"); color: Theme.textMuted; font: Typography.caption }
-                    Text { Layout.preferredWidth: Theme.tableActionWidth; text: qsTr("ACTIONS"); color: Theme.textMuted; font: Typography.caption; horizontalAlignment: Text.AlignRight }
+                    Text {
+                        Layout.preferredWidth: parent.width * 0.25
+                        text: qsTr("NAME")
+                        color: Theme.textMuted
+                        font.family: Typography.caption.family
+                        font.pixelSize: Typography.caption.pixelSize
+                        font.weight: Typography.caption.weight
+                    }
+                    Text {
+                        Layout.preferredWidth: parent.width * 0.18
+                        text: qsTr("SCHEDULE")
+                        color: Theme.textMuted
+                        font.family: Typography.caption.family
+                        font.pixelSize: Typography.caption.pixelSize
+                        font.weight: Typography.caption.weight
+                    }
+                    Text {
+                        Layout.preferredWidth: parent.width * 0.12
+                        text: qsTr("STATE")
+                        color: Theme.textMuted
+                        font.family: Typography.caption.family
+                        font.pixelSize: Typography.caption.pixelSize
+                        font.weight: Typography.caption.weight
+                    }
+                    Text {
+                        Layout.preferredWidth: parent.width * 0.17
+                        text: qsTr("LAST RUN")
+                        color: Theme.textMuted
+                        font.family: Typography.caption.family
+                        font.pixelSize: Typography.caption.pixelSize
+                        font.weight: Typography.caption.weight
+                    }
+                    Text {
+                        Layout.fillWidth: true
+                        text: qsTr("NEXT RUN")
+                        color: Theme.textMuted
+                        font.family: Typography.caption.family
+                        font.pixelSize: Typography.caption.pixelSize
+                        font.weight: Typography.caption.weight
+                    }
+                    Text {
+                        Layout.preferredWidth: Theme.tableActionWidth
+                        text: qsTr("ACTIONS")
+                        color: Theme.textMuted
+                        font.family: Typography.caption.family
+                        font.pixelSize: Typography.caption.pixelSize
+                        font.weight: Typography.caption.weight
+                        horizontalAlignment: Text.AlignRight
+                    }
                 }
             }
 
@@ -81,24 +127,45 @@ Item {
 
                 delegate: Rectangle {
                     id: jobRow
+                    required property var model
                     property string jobId: model.id
                     required property string name
                     required property string schedule
-                    required property int state
+                    property int cronState: model.state
                     required property var lastRun
                     required property var nextRun
                     required property string lastResult
-                    readonly property bool enabledState: state === CronState.Enabled
+                    readonly property bool enabledState: cronState === CronState.Enabled
                     implicitWidth: jobTable.width
                     implicitHeight: Theme.tableRowHeight
                     color: rowTap.hovered ? Theme.accentSoft : Theme.transparent
 
                     RowLayout {
-                        anchors { fill: parent; leftMargin: Theme.space.lg; rightMargin: Theme.space.lg }
+                        anchors {
+                            fill: parent
+                            leftMargin: Theme.space.lg
+                            rightMargin: Theme.space.lg
+                        }
                         spacing: Theme.space.md
 
-                        Text { Layout.preferredWidth: parent.width * 0.25; text: jobRow.name; color: Theme.textPrimary; elide: Text.ElideRight; font: Typography.label }
-                        Text { Layout.preferredWidth: parent.width * 0.18; text: jobRow.schedule; color: Theme.textSecondary; elide: Text.ElideRight; font: Typography.dataSmall }
+                        Text {
+                            Layout.preferredWidth: parent.width * 0.25
+                            text: jobRow.name
+                            color: Theme.textPrimary
+                            elide: Text.ElideRight
+                            font.family: Typography.label.family
+                            font.pixelSize: Typography.label.pixelSize
+                            font.weight: Typography.label.weight
+                        }
+                        Text {
+                            Layout.preferredWidth: parent.width * 0.18
+                            text: jobRow.schedule
+                            color: Theme.textSecondary
+                            elide: Text.ElideRight
+                            font.family: Typography.dataSmall.family
+                            font.pixelSize: Typography.dataSmall.pixelSize
+                            font.weight: Typography.dataSmall.weight
+                        }
                         Item {
                             Layout.preferredWidth: parent.width * 0.12
                             Layout.preferredHeight: Theme.chipHeight
@@ -113,17 +180,41 @@ Item {
                                     anchors.centerIn: parent
                                     text: jobRow.enabledState ? qsTr("ON") : qsTr("OFF")
                                     color: jobRow.enabledState ? Theme.ok : Theme.textMuted
-                                    font: Typography.caption
+                                    font.family: Typography.caption.family
+                                    font.pixelSize: Typography.caption.pixelSize
+                                    font.weight: Typography.caption.weight
                                 }
                             }
                         }
                         RowLayout {
                             Layout.preferredWidth: parent.width * 0.17
                             spacing: Theme.space.xs
-                            Text { text: jobRow.lastResult.toLowerCase().indexOf("success") >= 0 ? "✓" : jobRow.lastResult.length > 0 ? "✕" : "—"; color: text === "✓" ? Theme.ok : text === "✕" ? Theme.alert : Theme.textMuted; font: Typography.data }
-                            Text { Layout.fillWidth: true; text: jobRow.lastRun ? Qt.formatDateTime(jobRow.lastRun, "MMM d  HH:mm") : qsTr("Never"); color: Theme.textSecondary; elide: Text.ElideRight; font: Typography.dataSmall }
+                            Text {
+                                text: jobRow.lastResult.toLowerCase().indexOf("success") >= 0 ? "✓" : jobRow.lastResult.length > 0 ? "✕" : "—"
+                                color: text === "✓" ? Theme.ok : text === "✕" ? Theme.alert : Theme.textMuted
+                                font.family: Typography.data.family
+                                font.pixelSize: Typography.data.pixelSize
+                                font.weight: Typography.data.weight
+                            }
+                            Text {
+                                Layout.fillWidth: true
+                                text: jobRow.lastRun ? Qt.formatDateTime(jobRow.lastRun, "MMM d  HH:mm") : qsTr("Never")
+                                color: Theme.textSecondary
+                                elide: Text.ElideRight
+                                font.family: Typography.dataSmall.family
+                                font.pixelSize: Typography.dataSmall.pixelSize
+                                font.weight: Typography.dataSmall.weight
+                            }
                         }
-                        Text { Layout.fillWidth: true; text: jobRow.nextRun ? Qt.formatDateTime(jobRow.nextRun, "MMM d  HH:mm") : "—"; color: Theme.textSecondary; elide: Text.ElideRight; font: Typography.dataSmall }
+                        Text {
+                            Layout.fillWidth: true
+                            text: jobRow.nextRun ? Qt.formatDateTime(jobRow.nextRun, "MMM d  HH:mm") : "—"
+                            color: Theme.textSecondary
+                            elide: Text.ElideRight
+                            font.family: Typography.dataSmall.family
+                            font.pixelSize: Typography.dataSmall.pixelSize
+                            font.weight: Typography.dataSmall.weight
+                        }
                         RowLayout {
                             Layout.preferredWidth: Theme.tableActionWidth
                             spacing: Theme.space.xs
@@ -145,7 +236,9 @@ Item {
                             }
                         }
                     }
-                    HoverHandler { id: rowTap }
+                    HoverHandler {
+                        id: rowTap
+                    }
                 }
             }
         }
@@ -159,7 +252,10 @@ Item {
         actionText: qsTr("Refresh")
         onActionTriggered: root.refreshView()
     }
-    LoadingState { anchors.fill: parent; visible: cron.loading && jobTable.rows === 0 }
+    LoadingState {
+        anchors.fill: parent
+        visible: cron.loading && jobTable.rows === 0
+    }
     ErrorState {
         anchors.centerIn: parent
         width: Math.min(parent.width - Theme.space.xxl, Theme.dialogWidth)

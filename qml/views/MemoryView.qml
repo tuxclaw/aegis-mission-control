@@ -39,14 +39,20 @@ Item {
 
     Connections {
         target: memory
-        function onCurrentContentChanged() { root.busy = false; }
-        function onFilesChanged() { root.busy = false; }
+        function onCurrentContentChanged() {
+            root.busy = false;
+        }
+        function onFilesChanged() {
+            root.busy = false;
+        }
         function onErrorRaised(message, canRetry) {
             root.busy = false;
             root.retryable = canRetry;
             root.errorMessage = message.toLowerCase().indexOf("path") >= 0 || message.toLowerCase().indexOf("access") >= 0 ? qsTr("Access denied") : message;
         }
-        function onToast(message, level) { ToastHost.show(message, level); }
+        function onToast(message, level) {
+            ToastHost.show(message, level);
+        }
     }
 
     ColumnLayout {
@@ -55,7 +61,9 @@ Item {
 
         RowLayout {
             Layout.fillWidth: true
-            Item { Layout.fillWidth: true }
+            Item {
+                Layout.fillWidth: true
+            }
             Text {
                 text: qsTr("ROOT")
                 color: Theme.textMuted
@@ -84,6 +92,7 @@ Item {
 
             GlassCard {
                 title: qsTr("FILES")
+                enterDelay: 0
                 Layout.preferredWidth: Math.max(Theme.splitPaneMinimumWidth, root.width / 3)
                 Layout.fillHeight: true
 
@@ -110,18 +119,45 @@ Item {
                         border.color: Theme.accent
 
                         RowLayout {
-                            anchors { fill: parent; leftMargin: Theme.space.md; rightMargin: Theme.space.md }
+                            anchors {
+                                fill: parent
+                                leftMargin: Theme.space.md
+                                rightMargin: Theme.space.md
+                            }
                             spacing: Theme.space.sm
-                            Text { text: root.selectedPath === fileRow.relativePath ? "▸" : "•"; color: root.selectedPath === fileRow.relativePath ? Theme.accent : Theme.textMuted; font.family: Typography.dataSmall.family; font.pixelSize: Typography.dataSmall.pixelSize; font.weight: Typography.dataSmall.weight }
+                            Text {
+                                text: root.selectedPath === fileRow.relativePath ? "▸" : "•"
+                                color: root.selectedPath === fileRow.relativePath ? Theme.accent : Theme.textMuted
+                                font.family: Typography.dataSmall.family
+                                font.pixelSize: Typography.dataSmall.pixelSize
+                                font.weight: Typography.dataSmall.weight
+                            }
                             ColumnLayout {
                                 Layout.fillWidth: true
                                 spacing: Theme.space.xs
-                                Text { Layout.fillWidth: true; text: fileRow.name; color: Theme.textPrimary; elide: Text.ElideMiddle; font.family: Typography.label.family; font.pixelSize: Typography.label.pixelSize; font.weight: Typography.label.weight }
-                                Text { text: qsTr("%1 KB · %2").arg(Math.ceil(fileRow.sizeBytes / 1024)).arg(Qt.formatDateTime(fileRow.modifiedAt, "MMM d  HH:mm")); color: Theme.textMuted; font.family: Typography.caption.family; font.pixelSize: Typography.caption.pixelSize; font.weight: Typography.caption.weight }
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: fileRow.name
+                                    color: Theme.textPrimary
+                                    elide: Text.ElideMiddle
+                                    font.family: Typography.label.family
+                                    font.pixelSize: Typography.label.pixelSize
+                                    font.weight: Typography.label.weight
+                                }
+                                Text {
+                                    text: qsTr("%1 KB · %2").arg(Math.ceil(fileRow.sizeBytes / 1024)).arg(Qt.formatDateTime(fileRow.modifiedAt, "MMM d  HH:mm"))
+                                    color: Theme.textMuted
+                                    font.family: Typography.caption.family
+                                    font.pixelSize: Typography.caption.pixelSize
+                                    font.weight: Typography.caption.weight
+                                }
                             }
                         }
 
-                        HoverHandler { id: fileHover; cursorShape: Qt.PointingHandCursor }
+                        HoverHandler {
+                            id: fileHover
+                            cursorShape: Qt.PointingHandCursor
+                        }
                         TapHandler {
                             onTapped: {
                                 root.selectedPath = fileRow.relativePath;
@@ -148,6 +184,7 @@ Item {
             }
 
             GlassCard {
+                enterDelay: Motion.stagger
                 Layout.fillWidth: true
                 Layout.fillHeight: true
 
@@ -158,8 +195,23 @@ Item {
 
                     RowLayout {
                         Layout.fillWidth: true
-                        Text { Layout.fillWidth: true; text: root.selectedName.length > 0 ? root.selectedName : qsTr("Select a memory file"); color: Theme.textPrimary; elide: Text.ElideMiddle; font.family: Typography.heading.family; font.pixelSize: Typography.heading.pixelSize; font.weight: Typography.heading.weight }
-                        Text { visible: root.selectedSize > 0; text: qsTr("%1 KB").arg(Math.ceil(root.selectedSize / 1024)); color: Theme.textMuted; font.family: Typography.dataSmall.family; font.pixelSize: Typography.dataSmall.pixelSize; font.weight: Typography.dataSmall.weight }
+                        Text {
+                            Layout.fillWidth: true
+                            text: root.selectedName.length > 0 ? root.selectedName : qsTr("Select a memory file")
+                            color: Theme.textPrimary
+                            elide: Text.ElideMiddle
+                            font.family: Typography.heading.family
+                            font.pixelSize: Typography.heading.pixelSize
+                            font.weight: Typography.heading.weight
+                        }
+                        Text {
+                            visible: root.selectedSize > 0
+                            text: qsTr("%1 KB").arg(Math.ceil(root.selectedSize / 1024))
+                            color: Theme.textMuted
+                            font.family: Typography.dataSmall.family
+                            font.pixelSize: Typography.dataSmall.pixelSize
+                            font.weight: Typography.dataSmall.weight
+                        }
                     }
 
                     ListView {
@@ -185,13 +237,13 @@ Item {
                     }
 
                     EmptyState {
-                        anchors.centerIn: parent
+                        Layout.alignment: Qt.AlignCenter
                         visible: root.selectedPath.length === 0 && !root.busy
                         title: qsTr("Select a memory file")
                         detail: qsTr("Content is shown as inert text with safe Markdown-lite styling.")
                     }
                     ErrorState {
-                        anchors.centerIn: parent
+                        Layout.alignment: Qt.AlignCenter
                         visible: root.previewTooLarge
                         userMessage: qsTr("File too large to preview")
                     }
@@ -200,7 +252,10 @@ Item {
         }
     }
 
-    LoadingState { anchors.fill: parent; visible: root.busy }
+    LoadingState {
+        anchors.fill: parent
+        visible: root.busy
+    }
     ErrorState {
         anchors.centerIn: parent
         width: Math.min(parent.width - Theme.space.xxl, Theme.dialogWidth)

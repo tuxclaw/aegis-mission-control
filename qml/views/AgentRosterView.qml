@@ -53,7 +53,9 @@ Item {
             Layout.fillWidth: true
             spacing: Theme.space.md
 
-            Item { Layout.fillWidth: true }
+            Item {
+                Layout.fillWidth: true
+            }
             Text {
                 text: qsTr("FILTER")
                 color: Theme.textMuted
@@ -77,11 +79,12 @@ Item {
             clip: true
             model: agents.agents
             cellWidth: Math.max(Theme.minimumCardWidth + Theme.viewGutter, width / Math.max(1, Math.floor(width / (Theme.minimumCardWidth + Theme.viewGutter))))
-            cellHeight: Theme.agentCardHeight + Theme.viewGutter
+            cellHeight: Theme.agentCardHeight + Theme.viewGutter + (root.expandedAgentId.length > 0 ? Theme.skeletonRowHeight : 0)
 
             delegate: Item {
                 id: agentCell
-                property string agentKey: model.id
+                required property int index
+                property string agentKey: displayName + "#" + index
                 required property string displayName
                 required property string model
                 required property int status
@@ -94,6 +97,7 @@ Item {
 
                 GlassCard {
                     anchors.fill: parent
+                    enterDelay: index * Motion.stagger
                     interactive: true
 
                     ColumnLayout {
