@@ -114,4 +114,24 @@ QtObject {
     readonly property int statusBarMediumWidth: 1120
     readonly property int statusBarCompactWidth: 900
     readonly property int statusBarSegmentMinWidth: 112
+
+    // View layout tokens
+    readonly property int viewPadding: space.xl
+    readonly property int viewGutter: space.lg
+    readonly property int tableHeaderHeight: 40
+    readonly property int tableRowHeight: 52
+    readonly property int tableActionWidth: 112
+    readonly property int editorDrawerWidth: 440
+    readonly property int splitPaneMinimumWidth: 280
+    readonly property int contentMinimumHeight: 320
+    readonly property int calendarCellMinimumHeight: 92
+    readonly property int agentCardHeight: 236
+    readonly property int modelCardHeight: 156
+    readonly property int fieldHeight: 40
+    readonly property int textAreaMinimumHeight: 112
+    readonly property int statusDotSize: 10
+    readonly property int usageBarHeight: 10
+    readonly property int avatarSize: 44
+    readonly property int chipHeight: 24
+    readonly property int settingsLabelWidth: 152
 }
