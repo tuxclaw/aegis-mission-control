@@ -11,6 +11,7 @@ Item {
     property string title: ""
     property int padding: Theme.cardPadding
     property bool interactive: false
+    property int enterDelay: 0
     readonly property bool hovered: interactive && hoverHandler.hovered
 
     implicitWidth: Theme.minimumCardWidth
@@ -117,5 +118,16 @@ Item {
         }
     }
 
-    Component.onCompleted: enterAnimation.start()
+    Timer {
+        id: enterTimer
+        interval: root.enterDelay
+        onTriggered: enterAnimation.start()
+    }
+
+    Component.onCompleted: {
+        if (enterDelay > 0)
+            enterTimer.start();
+        else
+            enterAnimation.start();
+    }
 }
