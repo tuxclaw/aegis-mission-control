@@ -10,6 +10,7 @@ class SecretStore;
 
 class SettingsController final : public QObject {
   Q_OBJECT
+  Q_PROPERTY(bool busy READ busy NOTIFY busyChanged)
   Q_PROPERTY(QString gatewayBaseUrl READ gatewayBaseUrl WRITE setGatewayBaseUrl NOTIFY settingsChanged)
   Q_PROPERTY(bool gatewayAccessConfigured READ gatewayAccessConfigured NOTIFY
                  gatewayAccessConfiguredChanged)
@@ -38,6 +39,7 @@ class SettingsController final : public QObject {
   // Creates a non-secret settings editor over ConfigService and SecretStore.
   explicit SettingsController(ConfigService* config, SecretStore* secrets,
                               QObject* parent = nullptr);
+  [[nodiscard]] bool busy() const;
   [[nodiscard]] QString gatewayBaseUrl() const;
   [[nodiscard]] bool gatewayAccessConfigured() const;
   [[nodiscard]] int gatewayConnectTimeoutMs() const;
@@ -83,22 +85,25 @@ class SettingsController final : public QObject {
   Q_INVOKABLE void save();
   // Restores the editable fields to documented defaults before save.
   Q_INVOKABLE void resetDefaults();
-  // Writes a gateway token without ever reading it back to QML.
+  // Updates gateway access material without ever reading it back to QML.
   Q_INVOKABLE void updateGatewayAccess(QString value);
-  // Writes a git credential without ever reading it back to QML.
+  // Updates Git access material without ever reading it back to QML.
   Q_INVOKABLE void updateGitAccess(QString value);
 
  signals:
+  void busyChanged();
   void settingsChanged();
   void gatewayAccessConfiguredChanged();
   void gitAccessConfiguredChanged();
+  void settingsApplied();
+  void settingsError(QString message);
   void errorRaised(QString message, bool retryable);
   void toast(QString message, int level);
 
  private:
   void reload();
-  void refreshGatewayTokenSet();
-  void refreshGitCredentialSet();
+  void refreshGatewayAccessConfigured();
+  void refreshGitAccessConfigured();
   ConfigService* config_;
   SecretStore* secrets_;
   QString gatewayBaseUrl_, openclawBinary_, dataRoot_, gitRepoPath_;
@@ -109,8 +114,9 @@ class SettingsController final : public QObject {
   quint64 openclawCliOutputCap_ = 4194304, memoryMaxFileBytes_ = 5242880;
   QVariantMap memoryRoots_;
   QStringList packageQueryCommand_;
-  bool gatewayTokenSet_ = false;
-  bool gitCredentialSet_ = false;
+  bool busy_ = false;
+  bool gatewayAccessConfigured_ = false;
+  bool gitAccessConfigured_ = false;
   bool reduceMotion_ = false;
 };
 }  // namespace aegis

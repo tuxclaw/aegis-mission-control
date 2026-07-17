@@ -13,7 +13,7 @@ class MemoryController final : public QObject {
   Q_PROPERTY(MemoryFileModel* files READ files CONSTANT)
   Q_PROPERTY(QString currentContent READ currentContent NOTIFY currentContentChanged)
   Q_PROPERTY(QString currentRoot READ currentRoot NOTIFY currentRootChanged)
-  Q_PROPERTY(QStringList rootIds READ rootIds CONSTANT)
+  Q_PROPERTY(QStringList rootIds READ rootIds NOTIFY rootIdsChanged)
 
  public:
   // Creates a sandboxed memory-view controller.
@@ -25,10 +25,12 @@ class MemoryController final : public QObject {
   Q_INVOKABLE void setRoot(QString rootId);
   Q_INVOKABLE void selectFile(QString relativePath);
   Q_INVOKABLE void refresh();
+  void reconfigureRoots();
 
  signals:
   void currentContentChanged();
   void currentRootChanged();
+  void rootIdsChanged();
   void errorRaised(QString message, bool retryable);
 
  private:

@@ -7,6 +7,7 @@
 #include <QRegularExpression>
 #include <QSet>
 #include <QStandardPaths>
+#include <QTemporaryDir>
 #include <QVariantMap>
 
 #include "core/logging.h"
@@ -74,7 +75,8 @@ ConfigService::ConfigService(const QString& settingsFile, QObject* parent)
           .filePath(QStringLiteral("Aegis/aegis.ini"));
   const auto file = settingsFile.isEmpty() ? defaultFile : settingsFile;
   QDir().mkpath(QFileInfo(file).absolutePath());
-  settings_ = std::make_unique<QSettings>(file, QSettings::IniFormat);
+  settingsFile_ = file;
+  settings_ = std::make_unique<QSettings>(settingsFile_, QSettings::IniFormat);
 }
 
 Result<QUrl> ConfigService::gatewayBaseUrl() {
@@ -322,6 +324,35 @@ Result<void> ConfigService::setValue(const QString& key,
   if (key == QStringLiteral("ui.theme")) return uiTheme().transform([](const QString&) {});
   if (key == QStringLiteral("ui.reduceMotion")) return uiReduceMotion().transform([](bool) {});
   return logLevel().transform([](const QString&) {});
+}
+
+Result<void> ConfigService::persistValues(
+    const QList<QPair<QString, QVariant>>& values) const {
+  if (values.isEmpty()) {
+    return tl::unexpected(makeError(ErrorCode::ConfigInvalid,
+                                    QStringLiteral("empty settings snapshot")));
+  }
+  QTemporaryDir validationDirectory;
+  if (!validationDirectory.isValid()) {
+    return tl::unexpected(makeError(
+        ErrorCode::WriteFailed,
+        QStringLiteral("settings validation directory unavailable")));
+  }
+  ConfigService validator(
+      validationDirectory.filePath(QStringLiteral("validation.ini")));
+  for (const auto& [key, value] : values) {
+    const auto valid = validator.setValue(key, value);
+    if (!valid) return valid;
+  }
+
+  QSettings persisted(settingsFile_, QSettings::IniFormat);
+  for (const auto& [key, value] : values) persisted.setValue(key, value);
+  persisted.sync();
+  if (persisted.status() != QSettings::NoError) {
+    return tl::unexpected(makeError(ErrorCode::WriteFailed,
+                                    QStringLiteral("settings sync failed")));
+  }
+  return {};
 }
 
 Result<int> ConfigService::boundedInt(const QString& key, int defaultValue,

@@ -11,14 +11,21 @@ set(CMAKE_AUTORCC ON)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 find_package(Qt6 6.6 REQUIRED COMPONENTS Core Concurrent Network)
-find_package(Qt6Keychain QUIET)
+find_package(Qt6Keychain REQUIRED)
 find_package(unofficial-libgit2 CONFIG QUIET)
 if(TARGET unofficial::libgit2::libgit2 AND NOT TARGET Libgit2::Libgit2)
   add_library(Libgit2::Libgit2 INTERFACE IMPORTED)
   target_link_libraries(Libgit2::Libgit2 INTERFACE
     unofficial::libgit2::libgit2)
 else()
-  find_package(Libgit2 1.7 QUIET)
+  find_package(Libgit2 1.7 REQUIRED)
+endif()
+
+if(NOT TARGET Libgit2::Libgit2)
+  message(FATAL_ERROR "libgit2 1.7+ is required to build AEGIS")
+endif()
+if(NOT TARGET Qt6Keychain::Qt6Keychain AND NOT TARGET qt6keychain)
+  message(FATAL_ERROR "QtKeychain for Qt 6 is required to build AEGIS")
 endif()
 
 qt_standard_project_setup(REQUIRES 6.6)

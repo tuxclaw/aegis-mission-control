@@ -2,6 +2,11 @@
 
 #include "core/async.h"
 
+<<<<<<< HEAD
+=======
+#include <git2.h>
+
+>>>>>>> andy/fix-blockers-backend
 namespace aegis {
 
 AppContext::AppContext()
@@ -50,12 +55,28 @@ AppContext::AppContext()
                    gitController_.get(), &GitController::refresh);
   QObject::connect(agentController_.get(), &AgentController::refreshed,
                    appController_.get(), &AppController::markSynced);
+  QObject::connect(settingsController_.get(),
+                   &SettingsController::settingsApplied,
+                   memoryController_.get(),
+                   &MemoryController::reconfigureRoots);
+  QObject::connect(settingsController_.get(),
+                   &SettingsController::settingsApplied, [this] {
+                     const auto interval = configService_->vitalsIntervalMs();
+                     if (interval) {
+                       vitalsService_->start(
+                           std::chrono::milliseconds(interval.value()));
+                     }
+                   });
   auto interval = configService_->vitalsIntervalMs();
   vitalsService_->start(std::chrono::milliseconds(interval ? interval.value() : 1000));
 }
 
 AppContext::~AppContext() {
+<<<<<<< HEAD
   GitService::shutdownLibrary();
+=======
+  git_libgit2_shutdown();
+>>>>>>> andy/fix-blockers-backend
 }
 
 ConfigService* AppContext::configService() const { return configService_.get(); }

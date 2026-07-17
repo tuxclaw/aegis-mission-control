@@ -3,13 +3,17 @@
 #include <chrono>
 
 #include <QFuture>
+#include <QHash>
 #include <QJsonObject>
 #include <QNetworkRequest>
 #include <QObject>
+#include <QPointer>
 #include <QSet>
 #include <QUrlQuery>
 
 #include "core/result.h"
+
+class QNetworkReply;
 
 namespace aegis {
 
@@ -51,6 +55,13 @@ class GatewayService : public QObject {
   Result<QNetworkRequest> authorizedRequest(const QString& path,
                                              const QUrlQuery& query,
                                              const QString& token) const;
+  void startStreamReply(const QString& requestId, QNetworkRequest request,
+                        const QJsonObject& body, int connectTimeoutMs);
+  Result<void> consumeStreamBytes(const QString& requestId,
+                                  const QByteArray& bytes);
+  Result<void> processStreamLine(const QString& requestId,
+                                 const QByteArray& line);
+  void completeStream(const QString& requestId);
   void setConnectionState(ConnectionState state);
 
   SecretStore* secrets_;
@@ -58,6 +69,10 @@ class GatewayService : public QObject {
   HttpClient* http_;
   ConnectionState connectionState_ = ConnectionState::Disconnected;
   QSet<QString> cancelledStreams_;
+  QHash<QString, QPointer<QNetworkReply>> streamReplies_;
+  QHash<QString, QByteArray> streamLineBuffers_;
+  QHash<QString, quint64> streamReceivedBytes_;
+  QHash<QString, AegisError> streamForcedErrors_;
 };
 
 }  // namespace aegis

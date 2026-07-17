@@ -3,6 +3,7 @@
 #include <memory>
 
 #include <QMap>
+#include <QList>
 #include <QObject>
 #include <QSettings>
 #include <QString>
@@ -64,6 +65,10 @@ class ConfigService : public QObject {
   // Validates and persists one known key; unknown keys are rejected.
   Result<void> setValue(const QString& key, const QVariant& value);
 
+  // Validates a complete immutable snapshot and persists it with one sync.
+  Result<void> persistValues(
+      const QList<QPair<QString, QVariant>>& values) const;
+
  private:
   Result<int> boundedInt(const QString& key, int defaultValue, int minimum,
                          int maximum);
@@ -75,6 +80,7 @@ class ConfigService : public QObject {
                                const QString& detail);
 
   std::unique_ptr<QSettings> settings_;
+  QString settingsFile_;
 };
 
 }  // namespace aegis

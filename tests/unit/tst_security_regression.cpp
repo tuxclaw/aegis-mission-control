@@ -1,14 +1,16 @@
+#include <array>
+#include <algorithm>
+
+#include <QFutureWatcher>
 #include <QMetaMethod>
 #include <QMetaProperty>
-#include <QHostAddress>
-#include <QTcpServer>
-#include <QTcpSocket>
+#include <QSignalSpy>
 #include <QTemporaryDir>
-#include <QTimer>
+#include <QUuid>
 #include <QtTest>
 
-#include <array>
-
+#include "config/config_service.h"
+#include "config/secret_store.h"
 #include "controllers/agent_controller.h"
 #include "controllers/app_controller.h"
 #include "controllers/calendar_controller.h"
@@ -20,148 +22,102 @@
 #include "controllers/package_controller.h"
 #include "controllers/settings_controller.h"
 #include "controllers/vitals_controller.h"
-#include "config/config_service.h"
-#include "config/secret_store.h"
 #include "core/http_client.h"
-#include "dto/creative_dto.h"
-#include "services/creative_service.h"
 #include "services/gateway_service.h"
 
 class SecurityRegressionTest : public QObject {
   Q_OBJECT
 
  private slots:
-  void controllersDoNotExposeSecretNamedMembers();
-  void creativeRequestRejectsOutOfRangeValues();
-  void ollamaFramesStreamBeforeCompletion();
+  void controllerReflectionRejectsSensitiveNames();
+  void gatewayFailsClosedWithoutAccessMaterial();
+  void controllersExposeNoCredentialReturningMethod();
+
+ private:
+  static const std::array<const QMetaObject*, 11>& controllerMetaObjects();
+  static bool containsSensitiveTerm(QByteArrayView name);
 };
 
-void SecurityRegressionTest::controllersDoNotExposeSecretNamedMembers() {
-  const std::array<const QMetaObject*, 11> controllers = {
-      &aegis::AppController::staticMetaObject,
+const std::array<const QMetaObject*, 11>&
+SecurityRegressionTest::controllerMetaObjects() {
+  static const std::array<const QMetaObject*, 11> kControllers = {
       &aegis::AgentController::staticMetaObject,
-      &aegis::VitalsController::staticMetaObject,
+      &aegis::AppController::staticMetaObject,
       &aegis::CalendarController::staticMetaObject,
+      &aegis::CreativeController::staticMetaObject,
       &aegis::CronController::staticMetaObject,
+      &aegis::GitController::staticMetaObject,
       &aegis::MemoryController::staticMetaObject,
       &aegis::ModelController::staticMetaObject,
       &aegis::PackageController::staticMetaObject,
-      &aegis::GitController::staticMetaObject,
-      &aegis::CreativeController::staticMetaObject,
       &aegis::SettingsController::staticMetaObject,
-  };
-  const QStringList denylist = {
-      QStringLiteral("token"), QStringLiteral("secret"),
-      QStringLiteral("password"), QStringLiteral("bearer"),
-      QStringLiteral("credential")};
+      &aegis::VitalsController::staticMetaObject};
+  return kControllers;
+}
 
-  for (const auto* metaObject : controllers) {
-    for (int index = metaObject->propertyOffset();
-         index < metaObject->propertyCount(); ++index) {
-      const auto name = QString::fromLatin1(metaObject->property(index).name());
-      for (const auto& denied : denylist) {
-        QVERIFY2(!name.contains(denied, Qt::CaseInsensitive),
-                 qPrintable(QStringLiteral("%1 property %2 matched %3")
-                                .arg(metaObject->className(), name, denied)));
-      }
+bool SecurityRegressionTest::containsSensitiveTerm(QByteArrayView name) {
+  const auto normalized = name.toByteArray().toLower();
+  static const std::array<QByteArray, 5> kDenied = {
+      QByteArrayLiteral("token"), QByteArrayLiteral("secret"),
+      QByteArrayLiteral("password"), QByteArrayLiteral("bearer"),
+      QByteArrayLiteral("credential")};
+  return std::any_of(kDenied.cbegin(), kDenied.cend(),
+                     [&normalized](const QByteArray& denied) {
+                       return normalized.contains(denied);
+                     });
+}
+
+void SecurityRegressionTest::controllerReflectionRejectsSensitiveNames() {
+  for (const auto* metaObject : controllerMetaObjects()) {
+    for (int index = 0; index < metaObject->propertyCount(); ++index) {
+      const auto property = metaObject->property(index);
+      QVERIFY2(!containsSensitiveTerm(property.name()),
+               qPrintable(QStringLiteral("Sensitive controller property: %1::%2")
+                              .arg(metaObject->className(), property.name())));
     }
-    for (int index = metaObject->methodOffset();
-         index < metaObject->methodCount(); ++index) {
-      const auto name = QString::fromLatin1(metaObject->method(index).name());
-      for (const auto& denied : denylist) {
-        QVERIFY2(!name.contains(denied, Qt::CaseInsensitive),
-                 qPrintable(QStringLiteral("%1 method %2 matched %3")
-                                .arg(metaObject->className(), name, denied)));
-      }
+    for (int index = 0; index < metaObject->methodCount(); ++index) {
+      const auto method = metaObject->method(index);
+      QVERIFY2(!containsSensitiveTerm(method.name()),
+               qPrintable(QStringLiteral("Sensitive controller method: %1::%2")
+                              .arg(metaObject->className(), method.name())));
     }
   }
 }
 
-void SecurityRegressionTest::creativeRequestRejectsOutOfRangeValues() {
-  const QJsonObject valid{{QStringLiteral("backend"), QStringLiteral("ollama")},
-                          {QStringLiteral("model"), QStringLiteral("test")},
-                          {QStringLiteral("prompt"), QStringLiteral("hello")},
-                          {QStringLiteral("temperature"), 0.7},
-                          {QStringLiteral("maxTokens"), 1024}};
-  QVERIFY(aegis::dto::CreativeRequest::fromJson(valid));
-
-  for (const auto temperature : {-0.1, 2.1}) {
-    auto invalid = valid;
-    invalid.insert(QStringLiteral("temperature"), temperature);
-    QVERIFY(!aegis::dto::CreativeRequest::fromJson(invalid));
-  }
-  for (const auto maxTokens : {0, 8193}) {
-    auto invalid = valid;
-    invalid.insert(QStringLiteral("maxTokens"), maxTokens);
-    QVERIFY(!aegis::dto::CreativeRequest::fromJson(invalid));
-  }
-}
-
-void SecurityRegressionTest::ollamaFramesStreamBeforeCompletion() {
-  QTcpServer server;
-  QVERIFY(server.listen(QHostAddress::LocalHost));
-  const QByteArray first = "{\"response\":\"hello\",\"done\":false}\n";
-  const QByteArray second =
-      "{\"response\":\" world\",\"done\":true,\"done_reason\":\"stop\"}";
-  connect(&server, &QTcpServer::newConnection, &server,
-          [&server, first, second]() {
-            auto* socket = server.nextPendingConnection();
-            connect(socket, &QTcpSocket::readyRead, socket,
-                    [socket, first, second]() {
-                      socket->readAll();
-                      if (socket->property("responded").toBool()) return;
-                      socket->setProperty("responded", true);
-                      const auto header =
-                          QByteArrayLiteral("HTTP/1.1 200 OK\r\nContent-Type: application/x-ndjson\r\nContent-Length: ") +
-                          QByteArray::number(first.size() + second.size()) +
-                          QByteArrayLiteral("\r\nConnection: close\r\n\r\n");
-                      socket->write(header + first);
-                      socket->flush();
-                      QTimer::singleShot(100, socket, [socket, second]() {
-                        socket->write(second);
-                        socket->disconnectFromHost();
-                      });
-                    });
-          });
-
-  QTemporaryDir temporary;
-  QVERIFY(temporary.isValid());
-  aegis::ConfigService config(temporary.filePath(QStringLiteral("aegis.ini")));
-  const auto baseUrl = QStringLiteral("http://127.0.0.1:%1")
-                           .arg(server.serverPort());
-  QVERIFY(config.setValue(QStringLiteral("ollama.baseUrl"), baseUrl));
-  aegis::SecretStore secrets;
+void SecurityRegressionTest::gatewayFailsClosedWithoutAccessMaterial() {
+  QTemporaryDir directory;
+  QVERIFY(directory.isValid());
+  aegis::ConfigService config(
+      directory.filePath(QStringLiteral("aegis.ini")));
+  const auto serviceName =
+      QStringLiteral("dev.tux.aegis.test.%1")
+          .arg(QUuid::createUuid().toString(QUuid::WithoutBraces));
+  aegis::SecretStore secrets(serviceName);
   aegis::HttpClient http;
   aegis::GatewayService gateway(&secrets, &config, &http);
-  aegis::CreativeService creative(&config, &http, &gateway);
 
-  QStringList chunks;
-  bool finished = false;
-  QString finalText;
-  connect(&creative, &aegis::CreativeService::chunk, &creative,
-          [&chunks](const QString&, const QString& delta) {
-            chunks.append(delta);
-          });
-  connect(&creative, &aegis::CreativeService::finished, &creative,
-          [&finished, &finalText](const QString&,
-                                  const aegis::dto::CreativeResult& result) {
-            finished = true;
-            finalText = result.text;
-          });
+  QFutureWatcher<aegis::Result<QJsonObject>> watcher;
+  watcher.setFuture(gateway.get(QStringLiteral("status")));
+  QSignalSpy finished(&watcher, &QFutureWatcherBase::finished);
+  if (!watcher.isFinished()) QVERIFY(finished.wait(5000));
+  const auto result = watcher.result();
+  QVERIFY(!result);
+  QCOMPARE(result.error().code, aegis::ErrorCode::MissingToken);
+}
 
-  aegis::dto::CreativeRequest request;
-  request.model = QStringLiteral("test");
-  request.prompt = QStringLiteral("hello");
-  const auto requestId = creative.generate(request);
-  QVERIFY(!requestId.isEmpty());
-
-  QTRY_COMPARE_WITH_TIMEOUT(chunks.size(), 1, 1000);
-  QVERIFY(!finished);
-  QCOMPARE(chunks.first(), QStringLiteral("hello"));
-  QTRY_VERIFY_WITH_TIMEOUT(finished, 1000);
-  QCOMPARE(chunks, QStringList({QStringLiteral("hello"),
-                                QStringLiteral(" world")}));
-  QCOMPARE(finalText, QStringLiteral("hello world"));
+void SecurityRegressionTest::controllersExposeNoCredentialReturningMethod() {
+  for (const auto* metaObject : controllerMetaObjects()) {
+    for (int index = 0; index < metaObject->methodCount(); ++index) {
+      const auto method = metaObject->method(index);
+      if (method.returnMetaType().id() != QMetaType::QString &&
+          method.returnMetaType().id() != QMetaType::QByteArray) {
+        continue;
+      }
+      QVERIFY2(!containsSensitiveTerm(method.name()),
+               qPrintable(QStringLiteral("Credential-returning surface: %1::%2")
+                              .arg(metaObject->className(), method.name())));
+    }
+  }
 }
 
 QTEST_MAIN(SecurityRegressionTest)

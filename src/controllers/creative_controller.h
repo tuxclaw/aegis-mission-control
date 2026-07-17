@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QHash>
 #include <QObject>
 
 namespace aegis {
@@ -40,5 +41,6 @@ class CreativeController final : public QObject {
   QString finishReason_;
   quint64 outputBytes_ = 0;
   QString requestId_;
+  QHash<QString, QString> outputBuffers_;
 };
 }  // namespace aegis

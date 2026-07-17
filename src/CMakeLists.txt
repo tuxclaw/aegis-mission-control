@@ -106,21 +106,12 @@ target_link_libraries(aegis_core
   PUBLIC Qt6::Core Qt6::Concurrent Qt6::Network
 )
 
-if(TARGET Libgit2::Libgit2)
-  target_link_libraries(aegis_core PRIVATE Libgit2::Libgit2)
-  target_compile_definitions(aegis_core PRIVATE AEGIS_HAS_LIBGIT2=1)
-else()
-  message(WARNING "libgit2 development files not found; GitService will fail closed")
-endif()
+target_link_libraries(aegis_core PRIVATE Libgit2::Libgit2)
 
 if(TARGET Qt6Keychain::Qt6Keychain)
   target_link_libraries(aegis_core PRIVATE Qt6Keychain::Qt6Keychain)
-  target_compile_definitions(aegis_core PRIVATE AEGIS_HAS_QTKEYCHAIN=1)
-elseif(TARGET qt6keychain)
-  target_link_libraries(aegis_core PRIVATE qt6keychain)
-  target_compile_definitions(aegis_core PRIVATE AEGIS_HAS_QTKEYCHAIN=1)
 else()
-  message(WARNING "QtKeychain development files not found; SecretStore will fail closed")
+  target_link_libraries(aegis_core PRIVATE qt6keychain)
 endif()
 
 aegis_enable_warnings(aegis_core)

@@ -15,17 +15,19 @@ find_library(Libgit2_LIBRARY
 
 if(Libgit2_INCLUDE_DIR AND NOT PC_LIBGIT2_VERSION)
   file(STRINGS "${Libgit2_INCLUDE_DIR}/git2/version.h" _libgit2_version_lines
-    REGEX "^#define LIBGIT2_VER_(MAJOR|MINOR|REVISION) [0-9]+$")
+    REGEX "^#define LIBGIT2_(VER|VERSION)(_MAJOR|_MINOR|_REVISION|SION) +")
   foreach(_line IN LISTS _libgit2_version_lines)
-    if(_line MATCHES "LIBGIT2_VER_MAJOR ([0-9]+)")
-      set(_libgit2_major "${CMAKE_MATCH_1}")
-    elseif(_line MATCHES "LIBGIT2_VER_MINOR ([0-9]+)")
-      set(_libgit2_minor "${CMAKE_MATCH_1}")
-    elseif(_line MATCHES "LIBGIT2_VER_REVISION ([0-9]+)")
-      set(_libgit2_patch "${CMAKE_MATCH_1}")
+    if(_line MATCHES "LIBGIT2_VERSION +\"([0-9]+\\.[0-9]+\\.[0-9]+)\"")
+      set(PC_LIBGIT2_VERSION "${CMAKE_MATCH_1}")
+    elseif(_line MATCHES "LIBGIT2_(VER|VERSION)_MAJOR +([0-9]+)")
+      set(_libgit2_major "${CMAKE_MATCH_2}")
+    elseif(_line MATCHES "LIBGIT2_(VER|VERSION)_MINOR +([0-9]+)")
+      set(_libgit2_minor "${CMAKE_MATCH_2}")
+    elseif(_line MATCHES "LIBGIT2_(VER|VERSION)_REVISION +([0-9]+)")
+      set(_libgit2_patch "${CMAKE_MATCH_2}")
     endif()
   endforeach()
-  if(DEFINED _libgit2_major AND DEFINED _libgit2_minor
+  if(NOT PC_LIBGIT2_VERSION AND DEFINED _libgit2_major AND DEFINED _libgit2_minor
      AND DEFINED _libgit2_patch)
     set(PC_LIBGIT2_VERSION
       "${_libgit2_major}.${_libgit2_minor}.${_libgit2_patch}")

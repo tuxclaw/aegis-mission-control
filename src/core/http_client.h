@@ -7,15 +7,13 @@
 #include <QNetworkRequest>
 #include <QObject>
 
-#include <functional>
-
 #include "core/result.h"
+
+class QNetworkReply;
 
 namespace aegis {
 
 enum class HttpMethod { Get, Post, Put, Delete };
-
-using HttpChunkHandler = std::function<void(const QByteArray&)>;
 
 struct HttpRequestOptions {
   int connectTimeoutMs = 5000;
@@ -42,11 +40,9 @@ class HttpClient : public QObject {
       HttpMethod method, const QNetworkRequest& request, const QByteArray& body,
       const HttpRequestOptions& options = HttpRequestOptions{});
 
-  // Sends a request while delivering response bytes as they become available.
-  [[nodiscard]] QFuture<Result<QByteArray>> requestStreaming(
-      HttpMethod method, const QNetworkRequest& request, const QByteArray& body,
-      HttpChunkHandler chunkHandler,
-      const HttpRequestOptions& options = HttpRequestOptions{});
+  // Starts a raw POST whose reply is consumed and bounded by a streaming owner.
+  [[nodiscard]] QNetworkReply* postStream(const QNetworkRequest& request,
+                                          const QByteArray& body);
 
   // Sends a GET request and requires a JSON object response.
   [[nodiscard]] QFuture<Result<QJsonObject>> getJson(
