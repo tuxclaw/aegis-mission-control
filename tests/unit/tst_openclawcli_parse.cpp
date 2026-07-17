@@ -7,37 +7,74 @@ class OpenClawCliParseTest : public QObject {
   Q_OBJECT
  private slots:
   void parsesStructuredFixtures() {
-    aegis::dto::AgentDto agent;
-    agent.id = "helen";
-    agent.displayName = "Helen";
-    agent.model = "openai/example";
-    agent.status = aegis::dto::AgentStatus::Active;
-    agent.activeSessions = 1;
-    agent.avatarSeed = "helen";
+    const QJsonObject agent{{"agentDir", "/tmp/agents/helen"},
+                            {"bindings", 0},
+                            {"id", "helen"},
+                            {"identityEmoji", "🦸‍♀️"},
+                            {"identityName", "Helen"},
+                            {"identitySource", "profile"},
+                            {"isDefault", false},
+                            {"model", "openai/gpt-example"},
+                            {"workspace", "/tmp/workspace"}};
     auto agents = aegis::OpenClawCli::parseAgents(
-        QJsonDocument(QJsonObject{{"agents", QJsonArray{agent.toJson()}}})
+        QJsonDocument(QJsonObject{{"agents", QJsonArray{agent}}})
             .toJson(QJsonDocument::Compact));
     QVERIFY(agents);
     QCOMPARE(agents->first().id, QString("helen"));
+    QCOMPARE(agents->first().displayName, QString("Helen"));
+    QCOMPARE(agents->first().status, aegis::dto::AgentStatus::Unknown);
 
-    aegis::dto::CronJobDto job;
-    job.id = "daily";
-    job.name = "Daily";
-    job.schedule = "0 6 * * *";
-    job.state = aegis::dto::CronState::Enabled;
-    job.command = "briefing";
+    const QJsonObject job{
+        {"agentId", "helen"},
+        {"createdAtMs", 1784300000000.0},
+        {"delivery", QJsonObject{{"mode", "announce"}}},
+        {"description", "Daily briefing"},
+        {"enabled", true},
+        {"id", "daily"},
+        {"lastDelivered", true},
+        {"lastDeliveryStatus", "delivered"},
+        {"lastFailureNotificationDeliveryStatus", "not-requested"},
+        {"lastRunAtMs", 1784300564951.0},
+        {"lastRunStatus", "ok"},
+        {"name", "Daily"},
+        {"nextRunAtMs", 1784314964947.0},
+        {"payload", QJsonObject{{"kind", "agentTurn"},
+                                 {"message", "briefing"},
+                                 {"model", "openai/gpt-example"},
+                                 {"timeoutSeconds", 300}}},
+        {"schedule", QJsonObject{{"kind", "cron"},
+                                  {"expr", "0 6 * * *"},
+                                  {"tz", "America/Los_Angeles"},
+                                  {"staggerMs", 300000}}},
+        {"sessionTarget", "isolated"},
+        {"state", QJsonObject{{"lastRunStatus", "ok"}}},
+        {"status", "ok"},
+        {"updatedAtMs", 1784300000000.0},
+        {"wakeMode", "now"}};
     auto jobs = aegis::OpenClawCli::parseCron(
-        QJsonDocument(QJsonObject{{"jobs", QJsonArray{job.toJson()}}})
+        QJsonDocument(QJsonObject{{"jobs", QJsonArray{job}}})
             .toJson(QJsonDocument::Compact));
     QVERIFY(jobs);
     QCOMPARE(jobs->size(), 1);
+    QCOMPARE(jobs->first().schedule, QString("0 6 * * *"));
+    QCOMPARE(jobs->first().state, aegis::dto::CronState::Enabled);
+    QCOMPARE(jobs->first().lastResult, QString("success"));
+    QCOMPARE(jobs->first().lastRun.toMSecsSinceEpoch(), 1784300564951LL);
 
-    aegis::dto::ModelDto model{"openai/example", "openai", "Example", true};
+    const QJsonObject model{{"available", true},
+                            {"contextWindow", 1048576},
+                            {"input", "text"},
+                            {"key", "openai/example"},
+                            {"local", false},
+                            {"missing", false},
+                            {"name", "Example"},
+                            {"tags", QJsonArray{"default", "configured"}}};
     auto models = aegis::OpenClawCli::parseModels(
-        QJsonDocument(QJsonObject{{"models", QJsonArray{model.toJson()}}})
+        QJsonDocument(QJsonObject{{"models", QJsonArray{model}}})
             .toJson(QJsonDocument::Compact));
     QVERIFY(models);
     QVERIFY(models->first().isActive);
+    QCOMPARE(models->first().provider, QString("openai"));
   }
   void rejectsMalformedFixtures() {
     QVERIFY(!aegis::OpenClawCli::parseAgents("not json"));

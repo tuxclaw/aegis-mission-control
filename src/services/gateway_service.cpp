@@ -101,8 +101,10 @@ QFuture<Result<QJsonObject>> GatewayService::get(
         options.maxResponseBytes = cap.value();
         return http_->getJson(request.value(), options).then(
             this, [this](const Result<QJsonObject>& result) {
-              setConnectionState(result ? ConnectionState::Connected
-                                        : ConnectionState::Error);
+              const bool gatewayReachable =
+                  result || result.error().code == ErrorCode::ResponseMalformed;
+              setConnectionState(gatewayReachable ? ConnectionState::Connected
+                                                   : ConnectionState::Error);
               return result;
             });
       }));

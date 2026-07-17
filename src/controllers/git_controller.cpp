@@ -1,10 +1,12 @@
 #include "controllers/git_controller.h"
 
+#include "config/config_service.h"
 #include "services/git_service.h"
 
 namespace aegis {
-GitController::GitController(GitService* service, QObject* parent)
-    : QObject(parent), service_(service), files_(this) {
+GitController::GitController(GitService* service, ConfigService* config,
+                             QObject* parent)
+    : QObject(parent), service_(service), config_(config), files_(this) {
   connect(service_, &GitService::repoChanged, this, &GitController::refresh);
 }
 GitFileModel* GitController::files() { return &files_; }
@@ -13,13 +15,22 @@ int GitController::ahead() const { return status_.ahead; }
 int GitController::behind() const { return status_.behind; }
 bool GitController::clean() const { return status_.clean; }
 bool GitController::busy() const { return busy_; }
-bool GitController::repoConfigured() const { return !status_.repoPath.isEmpty(); }
+bool GitController::repoConfigured() const {
+  const auto repoPath = config_->gitRepoPath();
+  return repoPath && !repoPath->isEmpty();
+}
 void GitController::setBusy(bool value) {
   if (value == busy_) return;
   busy_ = value;
   emit busyChanged();
 }
 void GitController::refresh() {
+  if (!repoConfigured()) {
+    status_ = {};
+    files_.setItems({});
+    emit statusChanged();
+    return;
+  }
   if (busy_) return;
   setBusy(true);
   service_->status().then(this, [this](const Result<dto::GitStatusDto>& result) {

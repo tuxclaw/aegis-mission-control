@@ -5,6 +5,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QStandardPaths>
+#include <QTimer>
 
 #include "core/async.h"
 
@@ -37,25 +38,53 @@ AppContext::AppContext()
       memoryController_(std::make_unique<MemoryController>(memoryService_.get())),
       modelController_(std::make_unique<ModelController>(modelService_.get())),
       packageController_(std::make_unique<PackageController>(packageService_.get())),
-      gitController_(std::make_unique<GitController>(gitService_.get())),
+      gitController_(std::make_unique<GitController>(gitService_.get(),
+                                                     configService_.get())),
       creativeController_(std::make_unique<CreativeController>(creativeService_.get())),
       settingsController_(std::make_unique<SettingsController>(
           configService_.get(), secretStore_.get())) {
   async::configureGlobalThreadPool();
 
-  // Auto-detect gateway token from OpenClaw config if not in SecretStore
+  const auto checkGateway = [this] {
+    auto request = gatewayService_->get(QStringLiteral("/status"));
+    Q_UNUSED(request);
+  };
+
+  // Auto-detect gateway token from OpenClaw config if not in SecretStore.
   const QString configPath = QDir::homePath() + QStringLiteral("/.openclaw/openclaw.json");
   QFile configFile(configPath);
+  bool healthCheckPending = false;
   if (configFile.open(QIODevice::ReadOnly)) {
     const auto doc = QJsonDocument::fromJson(configFile.readAll());
     const auto root = doc.object();
-    // Token is at top-level auth.token (not gateway.auth.token)
-    const auto token = root.value(QStringLiteral("auth")).toObject()
-                           .value(QStringLiteral("token")).toString();
+    const auto gatewayAuth = root.value(QStringLiteral("gateway"))
+                                 .toObject()
+                                 .value(QStringLiteral("auth"))
+                                 .toObject();
+    auto token = gatewayAuth.value(QStringLiteral("token")).toString();
+    if (token.isEmpty()) {
+      token = root.value(QStringLiteral("auth"))
+                  .toObject()
+                  .value(QStringLiteral("token"))
+                  .toString();
+    }
     if (!token.isEmpty()) {
-      (void)secretStore_->write(QStringLiteral("gateway.token"), token);
+      healthCheckPending = true;
+      auto tokenWrite =
+          secretStore_->write(QStringLiteral("gateway.token"), token);
+      (void)tokenWrite.then(gatewayService_.get(),
+                            [checkGateway](const Result<void>&) {
+                              checkGateway();
+                            });
     }
   }
+  if (!healthCheckPending) {
+    QTimer::singleShot(0, gatewayService_.get(), checkGateway);
+  }
+  auto* gatewayHealthTimer = new QTimer(gatewayService_.get());
+  QObject::connect(gatewayHealthTimer, &QTimer::timeout,
+                   gatewayService_.get(), checkGateway);
+  gatewayHealthTimer->start(30000);
 
   QObject::connect(appController_.get(), &AppController::refreshAllRequested,
                    agentController_.get(), &AgentController::refresh);

@@ -42,6 +42,7 @@ class VitalsController final : public QObject {
  signals:
   void vitalsChanged();
   void errorRaised(QString message, bool retryable);
+  void toast(QString message, int level);
 
  private:
   VitalsService* service_;

@@ -5,6 +5,7 @@
 #include "models/git_file_model.h"
 
 namespace aegis {
+class ConfigService;
 class GitService;
 
 class GitController final : public QObject {
@@ -19,7 +20,8 @@ class GitController final : public QObject {
 
  public:
   // Creates a confirmed-intent adapter over GitService.
-  explicit GitController(GitService* service, QObject* parent = nullptr);
+  explicit GitController(GitService* service, ConfigService* config,
+                         QObject* parent = nullptr);
   [[nodiscard]] GitFileModel* files();
   [[nodiscard]] QString branch() const;
   [[nodiscard]] int ahead() const;
@@ -57,6 +59,7 @@ class GitController final : public QObject {
   void setBusy(bool value);
   void handle(Result<void> result);
   GitService* service_;
+  ConfigService* config_;
   GitFileModel files_;
   dto::GitStatusDto status_;
   bool busy_ = false;

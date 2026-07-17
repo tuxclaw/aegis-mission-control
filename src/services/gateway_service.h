@@ -30,7 +30,8 @@ class GatewayService : public QObject {
   // Creates the sole gateway authorization boundary.
   explicit GatewayService(SecretStore* secrets, ConfigService* config,
                           HttpClient* http, QObject* parent = nullptr);
-  // Sends an authorized JSON GET, failing closed without a token.
+  // Sends an authorized JSON GET to a non-/api gateway path, failing closed
+  // without a token.
   [[nodiscard]] QFuture<Result<QJsonObject>> get(
       const QString& path, const QUrlQuery& query = {},
       std::chrono::milliseconds deadline = std::chrono::milliseconds(30000));

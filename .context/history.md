@@ -34,3 +34,17 @@
 - Verified all view QML with Qt 6.11 `qmllint`, compiled the resource manifest with `rcc`, passed `git diff --check`, and built the available C++ core target. The immutable host lacks installed Qt Quick development modules, so the GUI CMake target remains gated until those modules are present.
 
 **Status:** Complete
+
+## [2026-07-17] Critical Runtime Defect Remediation
+**Agent:** Helen 🦸‍♀️
+**Branch:** `main` (explicit task requirement)
+
+- Corrected gateway token discovery, added startup and 30-second health probes,
+  and kept connection state aligned with successful gateway transport responses.
+- Remapped agent, cron, and model DTOs to the live OpenClaw CLI JSON schemas.
+- Made an unset Git repository a neutral empty state and forwarded vitals
+  failures through both controller error and toast signals.
+- Added live-schema parser fixtures; warnings-as-errors build and all 9 QtTest
+  suites pass, and an offscreen application smoke test stayed running.
+
+**Status:** Complete
