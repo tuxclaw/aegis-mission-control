@@ -51,6 +51,16 @@ Item {
         return qsTr("%1 KB/s").arg((bytes / 1024).toFixed(1));
     }
 
+    function formatCompactRate(bytes) {
+        if (bytes >= 1024 * 1024 * 1024)
+            return qsTr("%1G").arg((bytes / (1024 * 1024 * 1024)).toFixed(1));
+        if (bytes >= 1024 * 1024)
+            return qsTr("%1M").arg((bytes / (1024 * 1024)).toFixed(1));
+        if (bytes >= 1024)
+            return qsTr("%1K").arg((bytes / 1024).toFixed(1));
+        return qsTr("%1B").arg(Math.round(bytes));
+    }
+
     function hasFiniteValue(value) {
         return typeof value === "number" && Number.isFinite(value);
     }
@@ -103,7 +113,7 @@ Item {
                             anchors.horizontalCenter: parent.horizontalCenter
                             label: vitalCard.index === 0 ? qsTr("CPU") : vitalCard.index === 1 ? qsTr("GPU") : vitalCard.index === 2 ? qsTr("Memory") : qsTr("Network")
                             value: vitalCard.index === 0 ? Stats.cpuUsage * 100 : vitalCard.index === 1 ? vitalCard.gpuIdle ? Stats.gpuTemp : vitalCard.gpuUtilization : vitalCard.index === 2 && Stats.memTotalGiB > 0 ? Stats.memUsedGiB / Stats.memTotalGiB * 100 : vitalCard.networkGaugeValue
-                            valueText: vitalCard.index === 1 && vitalCard.gpuIdle && root.hasFiniteValue(Stats.gpuTemp) ? Stats.gpuTemp.toFixed(0) + "°C" : vitalCard.index === 3 && vitalCard.networkAvailable ? root.formatRate(vitalCard.totalThroughput) : ""
+                            valueText: vitalCard.index === 1 && vitalCard.gpuIdle && root.hasFiniteValue(Stats.gpuTemp) ? Stats.gpuTemp.toFixed(0) + "°C" : vitalCard.index === 3 && vitalCard.networkAvailable ? root.formatCompactRate(vitalCard.totalThroughput) : ""
                             unit: vitalCard.index === 1 && vitalCard.gpuIdle ? "°C" : vitalCard.index === 3 ? vitalCard.totalThroughput >= 1024 * 1024 ? " MB/s" : " KB/s" : "%"
                             available: vitalCard.index === 1 ? vitalCard.gpuIdle ? root.hasFiniteValue(Stats.gpuTemp) : root.hasFiniteValue(vitalCard.gpuUtilization) : vitalCard.index === 2 ? Stats.memTotalGiB > 0 : vitalCard.index === 3 ? vitalCard.networkAvailable : true
                             unavailableText: vitalCard.index === 3 ? qsTr("idle") : qsTr("n/a")
@@ -140,6 +150,8 @@ Item {
                         height: Math.min(parent.height - Theme.cardPadding * 2, Math.max(Theme.contentMinimumHeight - Theme.cardPadding * 2, contentHeight))
                         model: Containers.items
                         spacing: Theme.space.md
+                        topMargin: Theme.space.sm
+                        bottomMargin: Theme.space.sm
                         boundsBehavior: Flickable.StopAtBounds
                         clip: true
 
@@ -181,9 +193,9 @@ Item {
                                     textFormat: Text.PlainText
                                     color: Theme.textSecondary
                                     elide: Text.ElideMiddle
-                                    font.family: Typography.caption.family
-                                    font.pixelSize: Typography.caption.pixelSize
-                                    font.weight: Typography.caption.weight
+                                    font.family: Typography.dataSmall.family
+                                    font.pixelSize: Typography.dataSmall.pixelSize
+                                    font.weight: Typography.dataSmall.weight
                                 }
                             }
 
@@ -224,8 +236,8 @@ Item {
                     Layout.alignment: Qt.AlignTop
                     Layout.minimumWidth: Theme.minimumCardWidth
                     Layout.minimumHeight: Theme.contentMinimumHeight
-                    Layout.maximumHeight: Theme.contentMinimumHeight * 2
-                    Layout.preferredHeight: Math.min(Theme.contentMinimumHeight * 2, Math.max(Theme.contentMinimumHeight, processHeader.height + Theme.space.md + processList.contentHeight + Theme.cardPadding * 2))
+                    Layout.maximumHeight: Theme.contentMinimumHeight * 1.5
+                    Layout.preferredHeight: Math.min(Theme.contentMinimumHeight * 1.5, Math.max(Theme.contentMinimumHeight, processHeader.height + Theme.space.md + processList.contentHeight + Theme.cardPadding * 2))
                     clip: true
 
                     RowLayout {
@@ -238,27 +250,27 @@ Item {
                             Layout.fillWidth: true
                             text: qsTr("Name")
                             color: Theme.textMuted
-                            font.family: Typography.caption.family
-                            font.pixelSize: Typography.caption.pixelSize
-                            font.weight: Typography.caption.weight
+                            font.family: Typography.dataSmall.family
+                            font.pixelSize: Typography.dataSmall.pixelSize
+                            font.weight: Typography.dataSmall.weight
                         }
                         Text {
                             Layout.preferredWidth: Theme.tableActionWidth
                             text: qsTr("CPU")
                             color: Theme.textMuted
                             horizontalAlignment: Text.AlignRight
-                            font.family: Typography.caption.family
-                            font.pixelSize: Typography.caption.pixelSize
-                            font.weight: Typography.caption.weight
+                            font.family: Typography.dataSmall.family
+                            font.pixelSize: Typography.dataSmall.pixelSize
+                            font.weight: Typography.dataSmall.weight
                         }
                         Text {
                             Layout.preferredWidth: Theme.tableActionWidth
                             text: qsTr("MEM")
                             color: Theme.textMuted
                             horizontalAlignment: Text.AlignRight
-                            font.family: Typography.caption.family
-                            font.pixelSize: Typography.caption.pixelSize
-                            font.weight: Typography.caption.weight
+                            font.family: Typography.dataSmall.family
+                            font.pixelSize: Typography.dataSmall.pixelSize
+                            font.weight: Typography.dataSmall.weight
                         }
                     }
 
@@ -337,15 +349,15 @@ Item {
                     Layout.fillWidth: true
                     Layout.alignment: Qt.AlignTop
                     Layout.minimumWidth: Theme.splitPaneMinimumWidth
-                    Layout.minimumHeight: Theme.cardPadding * 2 + Theme.skeletonRowHeight
+                    Layout.minimumHeight: Theme.contentMinimumHeight * 0.55
                     Layout.maximumHeight: Theme.contentMinimumHeight * 2
-                    Layout.preferredHeight: Math.min(Theme.contentMinimumHeight * 2, Math.max(Theme.cardPadding * 2 + Theme.skeletonRowHeight, diskList.contentHeight + Theme.cardPadding * 2))
+                    Layout.preferredHeight: Math.min(Theme.contentMinimumHeight * 2, Math.max(Theme.contentMinimumHeight * 0.55, diskList.contentHeight + Theme.cardPadding * 2 + Theme.tableHeaderHeight))
                     clip: true
 
                     ListView {
                         id: diskList
                         width: parent.width
-                        height: Math.min(parent.height - Theme.cardPadding * 2, Math.max(Theme.skeletonRowHeight, contentHeight))
+                        height: count === 0 ? parent.height : Math.min(parent.height, Math.max(Theme.skeletonRowHeight, contentHeight))
                         model: vitals.diskModel
                         spacing: Theme.space.lg
                         boundsBehavior: Flickable.StopAtBounds
@@ -402,14 +414,11 @@ Item {
                             }
                         }
 
-                        Text {
+                        EmptyState {
                             anchors.centerIn: parent
                             visible: diskList.count === 0
-                            text: qsTr("n/a")
-                            color: Theme.textMuted
-                            font.family: Typography.data.family
-                            font.pixelSize: Typography.data.pixelSize
-                            font.weight: Typography.data.weight
+                            title: qsTr("No disk data")
+                            detail: qsTr("Disk usage will appear after the next system sample.")
                         }
                     }
                 }
@@ -454,6 +463,7 @@ Item {
                             }
                             Text {
                                 Layout.fillWidth: true
+                                Layout.preferredWidth: Theme.splitPaneMinimumWidth * 0.6
                                 text: agentRow.agentName
                                 color: Theme.textPrimary
                                 elide: Text.ElideRight
@@ -462,6 +472,7 @@ Item {
                                 font.weight: Typography.label.weight
                             }
                             Text {
+                                Layout.preferredWidth: Theme.tableActionWidth * 0.75
                                 text: root.statusName(agentRow.agentState)
                                 color: agentRow.agentState.toLowerCase() === "active" ? Theme.accent : agentRow.agentState.toLowerCase() === "idle" ? Theme.warn : agentRow.agentState.toLowerCase() === "error" ? Theme.alert : Theme.textMuted
                                 font.family: Typography.caption.family
@@ -469,8 +480,7 @@ Item {
                                 font.weight: Typography.caption.weight
                             }
                             Text {
-                                Layout.fillWidth: true
-                                Layout.preferredWidth: Theme.splitPaneMinimumWidth / 2
+                                Layout.preferredWidth: Theme.splitPaneMinimumWidth * 0.65
                                 text: agentRow.agentModel.length > 0 ? agentRow.agentModel : qsTr("n/a")
                                 color: Theme.textSecondary
                                 elide: Text.ElideRight

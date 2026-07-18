@@ -1,5 +1,16 @@
 # Build History
 
+## [2026-07-18] Dashboard Layout Follow-up
+**Agent:** Dash ⚡
+**Branch:** `main` (explicit task requirement)
+
+- Added intentional disk-card sizing and an empty state, plus container-list top padding and a tighter Processes height cap.
+- Aligned Fleet name, status, and model columns; increased small dashboard text readability; and brightened the global muted-text token.
+- Shortened Network gauge values to compact B/K/M/G notation while retaining full directional rates in the subtitle.
+- Verified QML parsing/lint, a successful GUI build, all 12 QtTest suites, installed-artifact parity, and an offscreen runtime smoke test.
+
+**Status:** Complete
+
 ## [2026-07-18] Gemini CLI and Xiaomi passToken Follow-up
 **Agent:** Helen 🦸‍♀️
 **Branch:** `main` (explicit task requirement)

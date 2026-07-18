@@ -33,7 +33,7 @@ QtObject {
     readonly property color ok: "#22e39a"
     readonly property color textPrimary: "#e6f0ff"
     readonly property color textSecondary: "#a8bcd8"
-    readonly property color textMuted: "#6b7ea0"
+    readonly property color textMuted: "#7089aa"
     readonly property color divider: Qt.rgba(143 / 255, 163 / 255, 200 / 255, 0.12)
     readonly property color shadow: Qt.rgba(0, 0, 0, 0.55)
     readonly property color transparent: "transparent"
