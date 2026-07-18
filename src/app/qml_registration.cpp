@@ -37,10 +37,10 @@ void QmlRegistration::registerTypes() {
 
 void QmlRegistration::registerContext(QQmlApplicationEngine* engine,
                                       AppContext* context) {
-  qmlRegisterSingletonInstance("Aegis", 1, 0, "Containers",
-                               context->containerController());
-  qmlRegisterSingletonInstance("Aegis", 1, 0, "Processes",
-                               context->processController());
+  // Containers and Processes are registered as context properties in main.cpp
+  // using the Fable 5 ContainerList and SystemStats classes.
+  // The AEGIS ContainerController/ProcessController are used internally by AppContext
+  // but the QML should use the Fable 5 classes for data access.
   qmlRegisterSingletonInstance("Aegis", 1, 0, "Usage",
                                context->usageController());
   auto* root = engine->rootContext();
