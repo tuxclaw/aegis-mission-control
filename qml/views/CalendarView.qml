@@ -17,6 +17,8 @@ Item {
     property bool retryable: false
     property bool saving: false
     property bool editorOpen: false
+    property bool drawerClosing: false
+    property bool drawerVisible: editorOpen || drawerClosing
 
     readonly property var paletteTokens: ["accent", "ok", "warn", "alert", "accentDim"]
     readonly property var weekdayNames: [qsTr("MON"), qsTr("TUE"), qsTr("WED"), qsTr("THU"), qsTr("FRI"), qsTr("SAT"), qsTr("SUN")]
@@ -36,6 +38,12 @@ Item {
 
     function addItem() {
         openNewEditor(new Date());
+    }
+
+    function closeEditor() {
+        drawerClosing = true;
+        editorOpen = false;
+        closeTimer.start();
     }
 
     function paletteColor(token) {
@@ -130,6 +138,12 @@ Item {
             if (level !== "error")
                 root.editorOpen = false;
         }
+    }
+
+    Timer {
+        id: closeTimer
+        interval: Motion.drawer
+        onTriggered: root.drawerClosing = false
     }
 
     ColumnLayout {
@@ -308,13 +322,13 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        visible: root.editorOpen
+        visible: root.drawerVisible
         color: Theme.modalBackdrop
         z: 20
         Accessible.name: qsTr("Close event editor")
         Accessible.role: Accessible.Button
         TapHandler {
-            onTapped: root.editorOpen = false
+            onTapped: root.closeEditor()
         }
     }
 
@@ -327,10 +341,11 @@ Item {
         }
         width: Math.min(Theme.editorDrawerWidth, root.width - Theme.space.xxl)
         z: 21
-        visible: root.editorOpen || x < root.width
+        visible: root.drawerVisible
+        enabled: root.editorOpen
         x: root.editorOpen ? root.width - width : root.width + Theme.enterOffset
         focus: root.editorOpen
-        Keys.onEscapePressed: root.editorOpen = false
+        Keys.onEscapePressed: root.closeEditor()
 
         Behavior on x {
             NumberAnimation {
@@ -356,7 +371,7 @@ Item {
                 implicitWidth: Theme.compactButtonSize
                 text: "×"
                 Accessible.name: qsTr("Close event editor")
-                onClicked: root.editorOpen = false
+                onClicked: root.closeEditor()
             }
         }
 
@@ -471,7 +486,7 @@ Item {
                     GhostButton {
                         text: qsTr("Cancel")
                         Accessible.name: qsTr("Cancel event editing")
-                        onClicked: root.editorOpen = false
+                        onClicked: root.closeEditor()
                     }
                     GhostButton {
                         visible: root.selectedEventId.length > 0
