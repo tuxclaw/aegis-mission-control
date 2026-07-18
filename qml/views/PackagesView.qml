@@ -99,6 +99,7 @@ Item {
                     id: packageTable
                     Layout.fillWidth: true
                     Layout.fillHeight: true
+                    boundsBehavior: Flickable.StopAtBounds
                     clip: true
                     model: packages.packages
                     rowSpacing: Theme.borderWidth

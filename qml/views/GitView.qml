@@ -142,6 +142,7 @@ Item {
                     height: parent.height
                     contentWidth: width
                     contentHeight: changeGroups.implicitHeight
+                    boundsBehavior: Flickable.StopAtBounds
                     clip: true
 
                     Column {
@@ -174,6 +175,8 @@ Item {
                                     height: contentHeight
                                     interactive: false
                                     model: git.files
+                                    boundsBehavior: Flickable.StopAtBounds
+                                    clip: true
 
                                     delegate: Rectangle {
                                         id: fileRow

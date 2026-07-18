@@ -1,5 +1,17 @@
 # Build History
 
+## [2026-07-17] UI Polish
+**Agent:** Dash ⚡
+**Branch:** `main` (explicit task requirement)
+
+- Removed the animated radar sweep and reduced the static grid-dot opacity.
+- Disabled overshoot across scrollable views and clipped their content.
+- Made the Calendar editor an explicitly dismissible 260 ms right-side drawer opened by a labeled header action.
+- Removed the Creative view, navigation entry, and QML resources.
+- Added dimmed `n/a` presentation for unavailable GPU and disk data while preserving the `/` mount label when sampled.
+
+**Status:** Complete
+
 ## [2026-07-17] Vitals and Agent Status Remediation
 **Agent:** Helen 🦸‍♀️
 **Branch:** `main` (explicit task requirement)

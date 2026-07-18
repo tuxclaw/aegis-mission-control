@@ -76,6 +76,7 @@ Item {
             id: modelGrid
             Layout.fillWidth: true
             Layout.fillHeight: true
+            boundsBehavior: Flickable.StopAtBounds
             clip: true
             model: models.models
             cellWidth: Math.max(Theme.minimumCardWidth + Theme.viewGutter, width / Math.max(1, Math.floor(width / (Theme.minimumCardWidth + Theme.viewGutter))))

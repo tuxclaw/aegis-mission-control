@@ -102,6 +102,7 @@ Item {
                     height: parent.height
                     model: memory.files
                     spacing: Theme.space.xs
+                    boundsBehavior: Flickable.StopAtBounds
                     clip: true
 
                     delegate: Rectangle {
@@ -220,6 +221,7 @@ Item {
                         Layout.fillHeight: true
                         model: root.contentLines
                         spacing: Theme.space.xs
+                        boundsBehavior: Flickable.StopAtBounds
                         clip: true
 
                         delegate: Text {

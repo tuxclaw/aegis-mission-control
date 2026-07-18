@@ -6,10 +6,10 @@
 **Decision:** New name AEGIS (shield of Athena). Qt 6 / QML / C++ / CMake. No webview. App ID: `dev.tux.aegis`.
 **Status:** Active
 
-## [2026-07-17] Drop Chat, Missions, Ideas
+## [2026-07-17] Drop Chat, Missions, Ideas, Creative UI
 **By:** Tux
 **Context:** Chat system was primary XSS/CSP attack surface. Mission Board had hydration race. Idea Board was low-value.
-**Decision:** Drop all three. Carry over: Agent Roster, Dashboard, Calendar, Cron, Memory, Models, Packages, Git, Creative.
+**Decision:** Drop Chat, Missions, Ideas, and the Creative UI. Carry over: Agent Roster, Dashboard, Calendar, Cron, Memory, Models, Packages, and Git.
 **Status:** Active
 
 ## [2026-07-17] Security Architecture

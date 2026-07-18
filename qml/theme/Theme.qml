@@ -21,7 +21,7 @@ QtObject {
     // Midnight Command palette.
     readonly property color bg: "#0a0e1a"
     readonly property color bgElevated: "#0d1424"
-    readonly property color gridLine: Qt.rgba(0, 212 / 255, 1, 0.05)
+    readonly property color gridLine: Qt.rgba(0, 212 / 255, 1, 0.025)
     readonly property color panel: Qt.rgba(15 / 255, 25 / 255, 50 / 255, 0.85)
     readonly property color panelBorder: Qt.rgba(0, 212 / 255, 1, 0.18)
     readonly property color panelGlow: Qt.rgba(0, 212 / 255, 1, 0.12)
@@ -61,7 +61,6 @@ QtObject {
     readonly property int cardPadding: 20
     readonly property int gridPitch: 32
     readonly property int gridDotSize: 2
-    readonly property real sweepOpacity: 0.06
     readonly property int enterOffset: 12
     readonly property int interactiveDuration: 160
 

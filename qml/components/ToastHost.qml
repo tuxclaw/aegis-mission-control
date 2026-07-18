@@ -53,6 +53,7 @@ Item {
         spacing: Theme.toastStackSpacing
         verticalLayoutDirection: ListView.BottomToTop
         interactive: contentHeight > height
+        boundsBehavior: Flickable.StopAtBounds
         clip: true
         model: toastModel
 

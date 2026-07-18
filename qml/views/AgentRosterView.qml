@@ -76,6 +76,7 @@ Item {
             id: rosterGrid
             Layout.fillWidth: true
             Layout.fillHeight: true
+            boundsBehavior: Flickable.StopAtBounds
             clip: true
             model: agents.agents
             cellWidth: Math.max(Theme.minimumCardWidth + Theme.viewGutter, width / Math.max(1, Math.floor(width / (Theme.minimumCardWidth + Theme.viewGutter))))

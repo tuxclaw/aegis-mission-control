@@ -120,6 +120,7 @@ Item {
                 id: jobTable
                 Layout.fillWidth: true
                 Layout.fillHeight: true
+                boundsBehavior: Flickable.StopAtBounds
                 clip: true
                 model: cron.jobs
                 columnSpacing: 0

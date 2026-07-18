@@ -14,6 +14,7 @@ Item {
     Canvas {
         id: gridCanvas
         anchors.fill: parent
+        clip: true
         renderStrategy: Canvas.Cooperative
 
         onWidthChanged: requestPaint()
@@ -30,50 +31,6 @@ Item {
                     context.fill();
                 }
             }
-        }
-    }
-
-    Canvas {
-        id: sweepCanvas
-        width: Math.max(root.width, root.height) * 2
-        height: width
-        anchors.centerIn: parent
-        opacity: Motion.reduceMotion ? 0 : 1
-        transformOrigin: Item.Center
-        renderStrategy: Canvas.Cooperative
-
-        onWidthChanged: requestPaint()
-        onHeightChanged: requestPaint()
-        onPaint: {
-            const context = getContext("2d");
-            const center = width / 2;
-            const radius = width / 2;
-            const slices = 18;
-            const sweepRadians = Math.PI / 3;
-            context.reset();
-
-            for (let slice = 0; slice < slices; ++slice) {
-                const start = -sweepRadians * slice / slices;
-                const end = -sweepRadians * (slice + 1) / slices;
-                const alpha = Theme.sweepOpacity * (1 - slice / slices);
-                context.globalAlpha = alpha;
-                context.fillStyle = Theme.accent;
-                context.beginPath();
-                context.moveTo(center, center);
-                context.arc(center, center, radius, end, start);
-                context.closePath();
-                context.fill();
-            }
-            context.globalAlpha = 1;
-        }
-
-        RotationAnimator on rotation {
-            from: 0
-            to: 360
-            duration: Motion.sweep
-            easing.type: Motion.sweepEasing
-            loops: Animation.Infinite
-            running: Motion.animationsEnabled && root.visible
         }
     }
 }

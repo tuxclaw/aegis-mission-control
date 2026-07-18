@@ -50,6 +50,10 @@ Item {
         return qsTr("%1 B/s").arg(Math.round(bytes));
     }
 
+    function hasFiniteValue(value) {
+        return typeof value === "number" && Number.isFinite(value);
+    }
+
     Connections {
         target: agents
         function onErrorRaised(message, canRetry) {
@@ -62,6 +66,7 @@ Item {
         anchors.fill: parent
         contentWidth: availableWidth
         clip: true
+        Component.onCompleted: contentItem["boundsBehavior"] = Flickable.StopAtBounds
 
         ColumnLayout {
             width: parent.width
@@ -88,8 +93,8 @@ Item {
                             anchors.horizontalCenter: parent.horizontalCenter
                             label: vitalCard.index === 0 ? qsTr("CPU") : vitalCard.index === 1 ? qsTr("GPU") : vitalCard.index === 2 ? qsTr("Memory") : qsTr("Network")
                             value: vitalCard.index === 0 ? vitals.cpuPct : vitalCard.index === 1 ? vitals.gpuPct : vitalCard.index === 2 ? vitals.memPct : Number.NaN
-                            available: vitalCard.index === 1 ? !Number.isNaN(vitals.gpuPct) : vitalCard.index === 3 ? vitals.netModel !== null : true
-                            subtext: vitalCard.index === 1 ? vitals.gpuVendor : vitalCard.index === 2 ? qsTr("%1 / %2").arg(vitals.memUsed).arg(vitals.memTotal) : vitalCard.index === 3 ? qsTr("live throughput") : qsTr("system load")
+                            available: vitalCard.index === 1 ? root.hasFiniteValue(vitals.gpuPct) : vitalCard.index === 3 ? vitals.netModel !== null : true
+                            subtext: vitalCard.index === 1 && root.hasFiniteValue(vitals.gpuPct) ? vitals.gpuVendor : vitalCard.index === 2 ? qsTr("%1 / %2").arg(vitals.memUsed).arg(vitals.memTotal) : vitalCard.index === 3 ? qsTr("live throughput") : vitalCard.index === 0 ? qsTr("system load") : ""
                             accentColor: vitalCard.index === 2 ? Theme.ok : Theme.accent
                         }
 
@@ -98,6 +103,7 @@ Item {
                             height: vitalCard.index === 3 ? Theme.skeletonRowHeight : 0
                             visible: vitalCard.index === 3
                             model: vitals.netModel
+                            boundsBehavior: Flickable.StopAtBounds
                             clip: true
                             delegate: RowLayout {
                                 id: networkRow
@@ -146,6 +152,7 @@ Item {
                         height: Math.max(Theme.contentMinimumHeight - Theme.cardPadding * 2, contentHeight)
                         model: vitals.diskModel
                         spacing: Theme.space.lg
+                        boundsBehavior: Flickable.StopAtBounds
                         clip: true
 
                         delegate: Column {
@@ -155,22 +162,23 @@ Item {
                             required property real totalBytes
                             width: diskList.width
                             spacing: Theme.space.sm
-                            readonly property real percent: totalBytes > 0 ? usedBytes / totalBytes * 100 : 0
+                            readonly property bool hasData: mount.length > 0 && root.hasFiniteValue(totalBytes) && root.hasFiniteValue(usedBytes) && totalBytes > 0 && usedBytes >= 0
+                            readonly property real percent: hasData ? usedBytes / totalBytes * 100 : 0
 
                             RowLayout {
                                 width: parent.width
                                 Text {
                                     Layout.fillWidth: true
-                                    text: diskRow.mount
-                                    color: Theme.textPrimary
+                                    text: diskRow.hasData ? diskRow.mount : qsTr("n/a")
+                                    color: diskRow.hasData ? Theme.textPrimary : Theme.textMuted
                                     elide: Text.ElideMiddle
                                     font.family: Typography.data.family
                                     font.pixelSize: Typography.data.pixelSize
                                     font.weight: Typography.data.weight
                                 }
                                 Text {
-                                    text: qsTr("%1%").arg(Math.round(diskRow.percent))
-                                    color: Theme.textSecondary
+                                    text: diskRow.hasData ? qsTr("%1%").arg(Math.round(diskRow.percent)) : qsTr("n/a")
+                                    color: diskRow.hasData ? Theme.textSecondary : Theme.textMuted
                                     font.family: Typography.dataSmall.family
                                     font.pixelSize: Typography.dataSmall.pixelSize
                                     font.weight: Typography.dataSmall.weight
@@ -182,8 +190,9 @@ Item {
                                 height: Theme.usageBarHeight
                                 radius: Theme.radiusPill
                                 color: Theme.skeletonBase
+                                opacity: diskRow.hasData ? 1 : 0.5
                                 Rectangle {
-                                    width: parent.width * Math.max(0, Math.min(1, diskRow.percent / 100))
+                                    width: diskRow.hasData ? parent.width * Math.max(0, Math.min(1, diskRow.percent / 100)) : 0
                                     height: parent.height
                                     radius: parent.radius
                                     color: diskRow.percent >= 90 ? Theme.alert : diskRow.percent >= 75 ? Theme.warn : Theme.ok
@@ -197,11 +206,14 @@ Item {
                             }
                         }
 
-                        EmptyState {
+                        Text {
                             anchors.centerIn: parent
                             visible: diskList.count === 0
-                            title: qsTr("No disk data")
-                            detail: qsTr("Disk usage will appear after the next vitals sample.")
+                            text: qsTr("n/a")
+                            color: Theme.textMuted
+                            font.family: Typography.data.family
+                            font.pixelSize: Typography.data.pixelSize
+                            font.weight: Typography.data.weight
                         }
                     }
                 }
@@ -220,6 +232,7 @@ Item {
                         height: Math.max(Theme.contentMinimumHeight - Theme.cardPadding * 2, contentHeight)
                         model: agents.agents
                         spacing: Theme.space.sm
+                        boundsBehavior: Flickable.StopAtBounds
                         clip: true
 
                         delegate: RowLayout {

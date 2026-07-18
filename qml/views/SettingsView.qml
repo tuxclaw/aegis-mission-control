@@ -152,6 +152,7 @@ Item {
         anchors.fill: parent
         contentWidth: availableWidth
         clip: true
+        Component.onCompleted: contentItem["boundsBehavior"] = Flickable.StopAtBounds
 
         ColumnLayout {
             width: parent.width

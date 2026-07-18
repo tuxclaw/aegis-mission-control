@@ -43,8 +43,6 @@ ApplicationWindow {
             packagesView.refreshView();
         else if (app.activeView === 7)
             gitView.refreshView();
-        else if (app.activeView === 8)
-            creativeView.refreshView();
         else
             settingsView.refreshView();
     }
@@ -91,10 +89,6 @@ ApplicationWindow {
             name: "Git"
             iconPath: "qrc:/icons/git-branch.svg"
         }
-        ListElement {
-            name: "Creative"
-            iconPath: "qrc:/icons/creative.svg"
-        }
     }
 
     ListModel {
@@ -122,9 +116,6 @@ ApplicationWindow {
         }
         ListElement {
             name: "Git"
-        }
-        ListElement {
-            name: "Creative"
         }
         ListElement {
             name: "Settings"
@@ -259,8 +250,8 @@ ApplicationWindow {
                     label: qsTr("Settings")
                     iconSource: "qrc:/icons/settings.svg"
                     showLabel: root.sidebarExpanded
-                    active: app.activeView === 9
-                    onClicked: root.selectView(9)
+                    active: app.activeView === 8
+                    onClicked: root.selectView(8)
                 }
                 GhostButton {
                     width: parent.width
@@ -307,10 +298,9 @@ ApplicationWindow {
                         Accessible.name: qsTr("Refresh %1").arg(allViewsModel.get(app.activeView).name)
                         onClicked: root.refreshCurrentView()
                     }
-                    GhostButton {
+                    PrimaryButton {
                         visible: app.activeView === 2
-                        implicitWidth: Theme.compactButtonSize
-                        text: "+"
+                        text: qsTr("+ New Event")
                         Accessible.name: qsTr("Create calendar event")
                         onClicked: calendarView.addItem()
                     }
@@ -348,10 +338,7 @@ ApplicationWindow {
                 }
                 GitView {
                     id: gitView
-                    onOpenSettingsRequested: root.selectView(9)
-                }
-                CreativeView {
-                    id: creativeView
+                    onOpenSettingsRequested: root.selectView(8)
                 }
                 SettingsView {
                     id: settingsView

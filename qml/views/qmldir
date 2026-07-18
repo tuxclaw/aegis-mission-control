@@ -7,5 +7,4 @@ MemoryView 1.0 MemoryView.qml
 ModelView 1.0 ModelView.qml
 PackagesView 1.0 PackagesView.qml
 GitView 1.0 GitView.qml
-CreativeView 1.0 CreativeView.qml
 SettingsView 1.0 SettingsView.qml

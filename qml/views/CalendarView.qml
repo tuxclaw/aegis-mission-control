@@ -25,6 +25,8 @@ Item {
         id: eventCounter
         visible: false
         model: calendar.events
+        boundsBehavior: Flickable.StopAtBounds
+        clip: true
     }
 
     function refreshView() {
@@ -159,11 +161,6 @@ Item {
                 Accessible.name: qsTr("Next month")
                 onClicked: root.changeMonth(1)
             }
-            PrimaryButton {
-                text: qsTr("+ Event")
-                Accessible.name: qsTr("Create calendar event")
-                onClicked: root.addItem()
-            }
         }
 
         GlassCard {
@@ -201,6 +198,7 @@ Item {
                     cellWidth: width / 7
                     cellHeight: height / 6
                     interactive: false
+                    boundsBehavior: Flickable.StopAtBounds
                     clip: true
 
                     delegate: Rectangle {
@@ -251,6 +249,7 @@ Item {
                             }
                             model: calendar.events
                             spacing: Theme.space.xs
+                            boundsBehavior: Flickable.StopAtBounds
                             clip: true
                             interactive: false
 
@@ -328,9 +327,10 @@ Item {
         }
         width: Math.min(Theme.editorDrawerWidth, root.width - Theme.space.xxl)
         z: 21
-        visible: x < root.width
+        visible: root.editorOpen || x < root.width
         x: root.editorOpen ? root.width - width : root.width + Theme.enterOffset
-        title: root.selectedEventId.length > 0 ? qsTr("EDIT EVENT") : qsTr("NEW EVENT")
+        focus: root.editorOpen
+        Keys.onEscapePressed: root.editorOpen = false
 
         Behavior on x {
             NumberAnimation {
@@ -339,10 +339,33 @@ Item {
             }
         }
 
+        RowLayout {
+            id: drawerHeader
+            width: parent.width
+
+            Text {
+                Layout.fillWidth: true
+                text: root.selectedEventId.length > 0 ? qsTr("EDIT EVENT") : qsTr("NEW EVENT")
+                color: Theme.textPrimary
+                font.family: Typography.heading.family
+                font.pixelSize: Typography.heading.pixelSize
+                font.weight: Typography.heading.weight
+                font.letterSpacing: Typography.heading.letterSpacing
+            }
+            GhostButton {
+                implicitWidth: Theme.compactButtonSize
+                text: "×"
+                Accessible.name: qsTr("Close event editor")
+                onClicked: root.editorOpen = false
+            }
+        }
+
         ScrollView {
             width: parent.width
-            height: parent.height
+            height: editorDrawer.height - Theme.cardPadding * 2 - drawerHeader.height - Theme.space.md
             contentWidth: availableWidth
+            clip: true
+            Component.onCompleted: contentItem["boundsBehavior"] = Flickable.StopAtBounds
 
             ColumnLayout {
                 width: parent.width
