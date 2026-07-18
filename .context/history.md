@@ -1,5 +1,20 @@
 # Build History
 
+## [2026-07-17] Disk, GPU, and Agent Data Accuracy
+**Agent:** Helen 🦸‍♀️
+**Branch:** `main` (explicit task requirement)
+
+- Detected the read-only Bazzite composefs root and sampled its writable `/var`
+  filesystem instead, using `f_bavail` for user-visible disk consumption.
+- Sampled every AMD DRM card on every vitals tick and reported the highest live
+  utilization, with temperature discovery across real hwmon directory names.
+- Enriched configured agents from `openclaw sessions --all-agents --json`,
+  mapping running, completed, and failed sessions to active/idle/error status.
+- Verified a warnings-as-errors GUI build, all 10 QtTest suites, and an
+  offscreen trace with repeated `/var` samples and non-zero `card1` GPU load.
+
+**Status:** Complete
+
 ## [2026-07-17] Memory, Disk, GPU, and Creative Backend Fixes
 **Agent:** Helen 🦸‍♀️
 **Branch:** `main` (explicit task requirement)

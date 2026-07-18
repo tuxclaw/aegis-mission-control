@@ -82,6 +82,7 @@ dto::GpuVitals readGpu() {
   const QDir drm(QStringLiteral("/sys/class/drm"));
   const auto cards = drm.entryList({QStringLiteral("card[0-9]*")},
                                    QDir::Dirs | QDir::NoDotAndDotDot);
+  dto::GpuVitals gpu;
   for (const auto& card : cards) {
     const auto base = drm.filePath(card + QStringLiteral("/device"));
     const auto busyPath = QDir(base).filePath(QStringLiteral("gpu_busy_percent"));
@@ -91,39 +92,59 @@ dto::GpuVitals readGpu() {
                               << utilizationPct;
       if (std::isfinite(utilizationPct) && utilizationPct >= 0.0 &&
           utilizationPct <= 100.0) {
-        return {true, QStringLiteral("amd"), utilizationPct, 0.0, 0.0,
-                readNumber(QDir(base).filePath(
-                               QStringLiteral("hwmon/hwmon0/temp1_input")),
-                           1000.0)};
+        double temperature = qQNaN();
+        const QDir hwmon(QDir(base).filePath(QStringLiteral("hwmon")));
+        const auto sensors = hwmon.entryList(
+            {QStringLiteral("hwmon*")}, QDir::Dirs | QDir::NoDotAndDotDot);
+        for (const auto& sensor : sensors) {
+          temperature = readNumber(
+              hwmon.filePath(sensor + QStringLiteral("/temp1_input")),
+              1000.0);
+          if (std::isfinite(temperature)) break;
+        }
+        if (!gpu.available || utilizationPct > gpu.utilizationPct) {
+          gpu = {true, QStringLiteral("amd"), utilizationPct, 0.0, 0.0,
+                 temperature};
+        }
       }
     }
   }
+  if (gpu.available) return gpu;
   qCDebug(aegisVitalsLog) << "GPU utilization unavailable in DRM sysfs";
   return {};
 }
 
 Result<dto::DiskVitals> readRootDisk() {
-  // On Bazzite/immutable, / is composefs (tiny overlay). Use /var for real disk.
-  const auto path = QStringLiteral("/var");
+  QString path = QStringLiteral("/");
   struct statvfs diskInfo {};
-  if (statvfs(path.toUtf8().constData(), &diskInfo) != 0) {
-    // Fallback to / if /var fails
-    if (statvfs("/", &diskInfo) != 0) {
-      const auto errorNumber = errno;
-      qCWarning(aegisVitalsLog)
-          << "statvfs failed" << errorNumber
-          << qt_error_string(errorNumber);
-      return tl::unexpected(makeError(ErrorCode::PathNotFound,
-                                      QStringLiteral("disk statistics unavailable")));
+  if (statvfs("/", &diskInfo) != 0) {
+    const auto errorNumber = errno;
+    qCWarning(aegisVitalsLog) << "statvfs failed for /" << errorNumber
+                              << qt_error_string(errorNumber);
+    return tl::unexpected(makeError(ErrorCode::PathNotFound,
+                                    QStringLiteral("disk statistics unavailable")));
+  }
+  if ((diskInfo.f_flag & ST_RDONLY) != 0 && diskInfo.f_bavail == 0) {
+    const auto writablePath = QStringLiteral("/var");
+    const auto encodedPath = QFile::encodeName(writablePath);
+    struct statvfs writableInfo {};
+    if (statvfs(encodedPath.constData(), &writableInfo) == 0 &&
+        writableInfo.f_blocks > 0 && writableInfo.f_bavail > 0) {
+      path = writablePath;
+      diskInfo = writableInfo;
+      qCDebug(aegisVitalsLog)
+          << "Using writable filesystem instead of read-only root image"
+          << path;
     }
   }
   const auto fragmentSize = static_cast<quint64>(diskInfo.f_frsize);
   const auto total = static_cast<quint64>(diskInfo.f_blocks) * fragmentSize;
-  const auto free = static_cast<quint64>(diskInfo.f_bfree) * fragmentSize;
-  const auto used = total >= free ? total - free : 0;
-  qCDebug(aegisVitalsLog) << "statvfs /" << "total" << total << "used"
-                          << used;
-  return dto::DiskVitals{QStringLiteral("/"), total, used};
+  const auto available =
+      static_cast<quint64>(diskInfo.f_bavail) * fragmentSize;
+  const auto used = total >= available ? total - available : 0;
+  qCDebug(aegisVitalsLog) << "statvfs" << path << "total" << total << "used"
+                          << used << "available" << available;
+  return dto::DiskVitals{path, total, used};
 }
 
 Result<dto::MemVitals> readMemory() {

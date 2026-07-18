@@ -19,9 +19,21 @@ QString statusName(AgentStatus status) {
 
 AgentStatus parseStatus(const QString& value) {
   const auto normalized = value.trimmed().toLower();
-  if (normalized == QStringLiteral("active")) return AgentStatus::Active;
-  if (normalized == QStringLiteral("idle")) return AgentStatus::Idle;
-  if (normalized == QStringLiteral("error")) return AgentStatus::Error;
+  if (normalized == QStringLiteral("active") ||
+      normalized == QStringLiteral("running")) {
+    return AgentStatus::Active;
+  }
+  if (normalized == QStringLiteral("idle") ||
+      normalized == QStringLiteral("done") ||
+      normalized == QStringLiteral("succeeded")) {
+    return AgentStatus::Idle;
+  }
+  if (normalized == QStringLiteral("error") ||
+      normalized == QStringLiteral("failed") ||
+      normalized == QStringLiteral("timed_out") ||
+      normalized == QStringLiteral("lost")) {
+    return AgentStatus::Error;
+  }
   return AgentStatus::Unknown;
 }
 
@@ -74,6 +86,16 @@ Result<AgentDto> AgentDto::fromJson(const QJsonObject& object) {
     const auto value = json::optionalString(object, key, 4096, true);
     if (!value) return tl::unexpected(value.error());
   }
+  if (object.contains(QStringLiteral("bindings"))) {
+    const auto bindings = json::requiredInt(
+        object, QStringLiteral("bindings"), 0, 100000);
+    if (!bindings) return tl::unexpected(bindings.error());
+  }
+  if (object.contains(QStringLiteral("isDefault"))) {
+    const auto isDefault =
+        json::requiredBool(object, QStringLiteral("isDefault"));
+    if (!isDefault) return tl::unexpected(isDefault.error());
+  }
 
   const auto displayName = !name->isEmpty()
                                ? name.value()
@@ -82,27 +104,8 @@ Result<AgentDto> AgentDto::fromJson(const QJsonObject& object) {
   const auto avatarSeed = identityEmoji->isEmpty() ? id.value()
                                                     : identityEmoji.value();
 
-  // CLI has no status field — derive from bindings/isDefault
-  int bindings = 0;
-  if (object.contains(QStringLiteral("bindings"))) {
-    const auto parsed = json::requiredInt(
-        object, QStringLiteral("bindings"), 0, 100000);
-    if (parsed) bindings = parsed.value();
-  }
-  bool isDefault = false;
-  if (object.contains(QStringLiteral("isDefault"))) {
-    const auto parsed = json::requiredBool(object, QStringLiteral("isDefault"));
-    if (parsed) isDefault = parsed.value();
-  }
-
-  AgentStatus status;
-  if (!statusText->isEmpty()) {
-    status = parseStatus(statusText.value());
-  } else if (isDefault || bindings > 0) {
-    status = AgentStatus::Active;
-  } else {
-    status = AgentStatus::Idle;
-  }
+  const auto status = statusText->isEmpty() ? AgentStatus::Idle
+                                             : parseStatus(statusText.value());
 
   return AgentDto{id.value(), displayName, model.value(), status,
                   statusDetail.value(), lastSeen.value(), activeSessions,

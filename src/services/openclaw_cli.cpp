@@ -5,7 +5,9 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonParseError>
+#include <QHash>
 #include <QProcess>
+#include <QTimeZone>
 
 #include "config/config_service.h"
 #include "core/async.h"
@@ -49,6 +51,18 @@ Result<QVector<Dto>> parseArray(const QByteArray& output, const QString& key) {
     result.append(parsed.value());
   }
   return result;
+}
+
+bool isActiveSession(const QString& status) {
+  return status == QStringLiteral("running") ||
+         status == QStringLiteral("active");
+}
+
+bool isFailedSession(const QString& status) {
+  return status == QStringLiteral("failed") ||
+         status == QStringLiteral("error") ||
+         status == QStringLiteral("timed_out") ||
+         status == QStringLiteral("lost");
 }
 
 }  // namespace
@@ -133,14 +147,39 @@ QFuture<Result<QVector<dto::AgentDto>>> OpenClawCli::listAgents() {
       return Result<QVector<dto::AgentDto>>(tl::unexpected(error));
     });
   }
-  return run({QStringLiteral("agents"), QStringLiteral("list"),
-              QStringLiteral("--json")},
-             std::chrono::milliseconds(timeout.value()), cap.value())
-      .then(this, [](const Result<CliResult>& result) {
-        return result ? parseAgents(result->stdoutData)
-                      : Result<QVector<dto::AgentDto>>(
-                            tl::unexpected(result.error()));
-      });
+  return async::flatten(
+      this,
+      run({QStringLiteral("agents"), QStringLiteral("list"),
+           QStringLiteral("--json")},
+          std::chrono::milliseconds(timeout.value()), cap.value())
+          .then(this, [this, timeout = timeout.value(), cap = cap.value()](
+                          const Result<CliResult>& result)
+                          -> QFuture<Result<QVector<dto::AgentDto>>> {
+            if (!result) {
+              return async::run([error = result.error()] {
+                return Result<QVector<dto::AgentDto>>(tl::unexpected(error));
+              });
+            }
+            auto agents = parseAgents(result->stdoutData);
+            if (!agents) {
+              return async::run([error = agents.error()] {
+                return Result<QVector<dto::AgentDto>>(tl::unexpected(error));
+              });
+            }
+            return run({QStringLiteral("sessions"),
+                        QStringLiteral("--all-agents"),
+                        QStringLiteral("--limit"), QStringLiteral("all"),
+                        QStringLiteral("--json")},
+                       std::chrono::milliseconds(timeout), cap)
+                .then(this, [agents = std::move(agents.value())](
+                                const Result<CliResult>& sessions) mutable {
+                  return sessions
+                             ? applyAgentSessions(
+                                   std::move(agents), sessions->stdoutData)
+                             : Result<QVector<dto::AgentDto>>(
+                                   tl::unexpected(sessions.error()));
+                });
+          }));
 }
 
 QFuture<Result<QVector<dto::CronJobDto>>> OpenClawCli::listCron() {
@@ -184,6 +223,77 @@ QFuture<Result<QVector<dto::ModelDto>>> OpenClawCli::listModels() {
 Result<QVector<dto::AgentDto>> OpenClawCli::parseAgents(
     const QByteArray& output) {
   return parseArray<dto::AgentDto>(output, QStringLiteral("agents"));
+}
+
+Result<QVector<dto::AgentDto>> OpenClawCli::applyAgentSessions(
+    QVector<dto::AgentDto> agents, const QByteArray& output) {
+  QJsonParseError parseError;
+  const auto document = QJsonDocument::fromJson(output, &parseError);
+  if (parseError.error != QJsonParseError::NoError || !document.isObject()) {
+    return tl::unexpected(makeError(ErrorCode::CliOutputMalformed,
+                                    QStringLiteral("session JSON parse failed")));
+  }
+  const auto sessionsValue =
+      document.object().value(QStringLiteral("sessions"));
+  if (!sessionsValue.isArray()) {
+    return tl::unexpected(makeError(ErrorCode::CliOutputMalformed,
+                                    QStringLiteral("session JSON shape invalid")));
+  }
+  const auto sessions = sessionsValue.toArray();
+  if (sessions.size() > 100000) {
+    return tl::unexpected(makeError(ErrorCode::CliOutputMalformed,
+                                    QStringLiteral("session count exceeded cap")));
+  }
+
+  struct SessionSummary {
+    int activeCount = 0;
+    qint64 latestAt = 0;
+    QString latestStatus;
+  };
+  QHash<QString, SessionSummary> summaries;
+  for (const auto& sessionValue : sessions) {
+    if (!sessionValue.isObject()) {
+      return tl::unexpected(makeError(ErrorCode::CliOutputMalformed,
+                                      QStringLiteral("session is not object")));
+    }
+    const auto session = sessionValue.toObject();
+    const auto agentId = session.value(QStringLiteral("agentId"));
+    const auto updatedAt = session.value(QStringLiteral("updatedAt"));
+    if (!agentId.isString() || agentId.toString().isEmpty() ||
+        !updatedAt.isDouble() || updatedAt.toDouble() < 0.0) {
+      return tl::unexpected(makeError(ErrorCode::CliOutputMalformed,
+                                      QStringLiteral("session identity invalid")));
+    }
+    const auto status = session.value(QStringLiteral("status"))
+                            .toString()
+                            .trimmed()
+                            .toLower();
+    auto& summary = summaries[agentId.toString()];
+    if (isActiveSession(status)) ++summary.activeCount;
+    const auto timestamp = static_cast<qint64>(updatedAt.toDouble());
+    if (timestamp >= summary.latestAt) {
+      summary.latestAt = timestamp;
+      summary.latestStatus = status;
+    }
+  }
+
+  for (auto& agent : agents) {
+    const auto summary = summaries.constFind(agent.id);
+    if (summary == summaries.cend()) continue;
+    agent.activeSessions = summary->activeCount;
+    agent.lastSeen =
+        QDateTime::fromMSecsSinceEpoch(summary->latestAt, QTimeZone::UTC);
+    agent.statusDetail.clear();
+    if (summary->activeCount > 0) {
+      agent.status = dto::AgentStatus::Active;
+    } else if (isFailedSession(summary->latestStatus)) {
+      agent.status = dto::AgentStatus::Error;
+      agent.statusDetail = QStringLiteral("Latest session failed");
+    } else {
+      agent.status = dto::AgentStatus::Idle;
+    }
+  }
+  return agents;
 }
 
 Result<QVector<dto::CronJobDto>> OpenClawCli::parseCron(

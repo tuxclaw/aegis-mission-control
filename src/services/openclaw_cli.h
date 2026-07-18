@@ -42,6 +42,9 @@ class OpenClawCli : public QObject {
 
   // Purely parses structured agent JSON output.
   static Result<QVector<dto::AgentDto>> parseAgents(const QByteArray& output);
+  // Enriches a configured roster with live per-agent session state.
+  static Result<QVector<dto::AgentDto>> applyAgentSessions(
+      QVector<dto::AgentDto> agents, const QByteArray& output);
   // Purely parses structured cron JSON output.
   static Result<QVector<dto::CronJobDto>> parseCron(const QByteArray& output);
   // Purely parses structured model JSON output.

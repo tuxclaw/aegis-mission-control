@@ -1,3 +1,6 @@
+#include <sys/statvfs.h>
+
+#include <QFile>
 #include <QTemporaryDir>
 #include <QtTest>
 
@@ -35,10 +38,20 @@ void VitalsServiceTest::samplesLinuxProcFilesAndUpdatesController() {
   QVERIFY(!controller.netModel().isEmpty());
 
   const auto disk = controller.diskModel().first().toMap();
-  QCOMPARE(disk.value(QStringLiteral("mount")).toString(),
-           QStringLiteral("/"));
-  QVERIFY(disk.value(QStringLiteral("totalBytes")).toULongLong() > 0);
-  QVERIFY(disk.value(QStringLiteral("usedBytes")).toULongLong() > 0);
+  const auto mount = disk.value(QStringLiteral("mount")).toString();
+  QVERIFY(!mount.isEmpty());
+  struct statvfs diskInfo {};
+  const auto encodedMount = QFile::encodeName(mount);
+  QCOMPARE(statvfs(encodedMount.constData(), &diskInfo), 0);
+  const auto expectedTotal = static_cast<quint64>(diskInfo.f_blocks) *
+                             static_cast<quint64>(diskInfo.f_frsize);
+  const auto expectedUsed = expectedTotal -
+                            static_cast<quint64>(diskInfo.f_bavail) *
+                                static_cast<quint64>(diskInfo.f_frsize);
+  QCOMPARE(disk.value(QStringLiteral("totalBytes")).toULongLong(),
+           expectedTotal);
+  QCOMPARE(disk.value(QStringLiteral("usedBytes")).toULongLong(),
+           expectedUsed);
 }
 
 QTEST_MAIN(VitalsServiceTest)

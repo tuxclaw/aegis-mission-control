@@ -42,6 +42,44 @@ class OpenClawCliParseTest : public QObject {
     QCOMPARE(configuredAgents->first().status,
              aegis::dto::AgentStatus::Idle);
 
+    const QJsonArray sessions{
+        QJsonObject{{"agentId", "helen"},
+                    {"status", "failed"},
+                    {"updatedAt", 1784300000000.0}},
+        QJsonObject{{"agentId", "helen"},
+                    {"status", "running"},
+                    {"updatedAt", 1784301000000.0}}};
+    auto liveAgents = aegis::OpenClawCli::applyAgentSessions(
+        configuredAgents.value(),
+        QJsonDocument(QJsonObject{{"sessions", sessions}})
+            .toJson(QJsonDocument::Compact));
+    QVERIFY(liveAgents);
+    QCOMPARE(liveAgents->first().status,
+             aegis::dto::AgentStatus::Active);
+    QCOMPARE(liveAgents->first().activeSessions, 1);
+    QCOMPARE(liveAgents->first().lastSeen.toMSecsSinceEpoch(),
+             1784301000000LL);
+
+    auto failedAgents = aegis::OpenClawCli::applyAgentSessions(
+        configuredAgents.value(),
+        QJsonDocument(QJsonObject{{"sessions", QJsonArray{sessions.first()}}})
+            .toJson(QJsonDocument::Compact));
+    QVERIFY(failedAgents);
+    QCOMPARE(failedAgents->first().status,
+             aegis::dto::AgentStatus::Error);
+    QCOMPARE(failedAgents->first().statusDetail,
+             QString("Latest session failed"));
+
+    auto completedSession = sessions.last().toObject();
+    completedSession.insert(QStringLiteral("status"), QStringLiteral("done"));
+    auto idleAgents = aegis::OpenClawCli::applyAgentSessions(
+        configuredAgents.value(),
+        QJsonDocument(QJsonObject{
+                          {"sessions", QJsonArray{completedSession}}})
+            .toJson(QJsonDocument::Compact));
+    QVERIFY(idleAgents);
+    QCOMPARE(idleAgents->first().status, aegis::dto::AgentStatus::Idle);
+
     const QJsonObject job{
         {"agentId", "helen"},
         {"createdAtMs", 1784300000000.0},
