@@ -1,5 +1,22 @@
 # Build History
 
+## [2026-07-18] Container and Process Monitoring Backend
+**Agent:** Helen 🦸‍♀️
+**Branch:** `main` (explicit task requirement)
+
+- Added strict container/process sample DTOs with stable JSON round trips.
+- Added asynchronous ten-second Podman inventory sampling with graceful empty
+  fallback and five-second `/proc` process sampling with delta CPU, RSS memory,
+  username, and bounded command-line collection.
+- Added QAbstractListModels, refreshable controllers, AppContext ownership,
+  `Containers`/`Processes` QML singletons, and model type registration.
+- Added focused DTO parsing regressions and expanded the controller reflection
+  security gate to cover both new controllers.
+- Verified a warnings-as-errors GUI build, all 12 QtTest executables, and an
+  offscreen application smoke test.
+
+**Status:** Complete
+
 ## [2026-07-17] Disk, GPU, and Agent Data Accuracy
 **Agent:** Helen 🦸‍♀️
 **Branch:** `main` (explicit task requirement)

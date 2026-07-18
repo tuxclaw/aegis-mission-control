@@ -21,6 +21,8 @@ set(AEGIS_CORE_SOURCES
   dto/agent_dto.h
   dto/calendar_event_dto.cpp
   dto/calendar_event_dto.h
+  dto/container_dto.cpp
+  dto/container_dto.h
   dto/creative_dto.cpp
   dto/creative_dto.h
   dto/cron_job_dto.cpp
@@ -36,6 +38,8 @@ set(AEGIS_CORE_SOURCES
   dto/model_dto.h
   dto/package_dto.cpp
   dto/package_dto.h
+  dto/process_dto.cpp
+  dto/process_dto.h
   dto/vitals_dto.cpp
   dto/vitals_dto.h
   controllers/agent_controller.cpp
@@ -44,6 +48,8 @@ set(AEGIS_CORE_SOURCES
   controllers/app_controller.h
   controllers/calendar_controller.cpp
   controllers/calendar_controller.h
+  controllers/container_controller.cpp
+  controllers/container_controller.h
   controllers/creative_controller.cpp
   controllers/creative_controller.h
   controllers/cron_controller.cpp
@@ -56,6 +62,8 @@ set(AEGIS_CORE_SOURCES
   controllers/model_controller.h
   controllers/package_controller.cpp
   controllers/package_controller.h
+  controllers/process_controller.cpp
+  controllers/process_controller.h
   controllers/settings_controller.cpp
   controllers/settings_controller.h
   controllers/vitals_controller.cpp
@@ -64,6 +72,8 @@ set(AEGIS_CORE_SOURCES
   models/agent_list_model.h
   models/calendar_event_model.cpp
   models/calendar_event_model.h
+  models/container_list_model.cpp
+  models/container_list_model.h
   models/cron_job_model.cpp
   models/cron_job_model.h
   models/git_file_model.cpp
@@ -74,8 +84,12 @@ set(AEGIS_CORE_SOURCES
   models/model_list_model.h
   models/package_list_model.cpp
   models/package_list_model.h
+  models/process_list_model.cpp
+  models/process_list_model.h
   services/calendar_store.cpp
   services/calendar_store.h
+  services/container_service.cpp
+  services/container_service.h
   services/creative_service.cpp
   services/creative_service.h
   services/cron_service.cpp
@@ -92,6 +106,8 @@ set(AEGIS_CORE_SOURCES
   services/openclaw_cli.h
   services/package_service.cpp
   services/package_service.h
+  services/process_service.cpp
+  services/process_service.h
   services/vitals_service.cpp
   services/vitals_service.h
 )

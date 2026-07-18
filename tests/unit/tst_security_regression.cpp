@@ -14,12 +14,14 @@
 #include "controllers/agent_controller.h"
 #include "controllers/app_controller.h"
 #include "controllers/calendar_controller.h"
+#include "controllers/container_controller.h"
 #include "controllers/creative_controller.h"
 #include "controllers/cron_controller.h"
 #include "controllers/git_controller.h"
 #include "controllers/memory_controller.h"
 #include "controllers/model_controller.h"
 #include "controllers/package_controller.h"
+#include "controllers/process_controller.h"
 #include "controllers/settings_controller.h"
 #include "controllers/vitals_controller.h"
 #include "core/http_client.h"
@@ -34,22 +36,24 @@ class SecurityRegressionTest : public QObject {
   void controllersExposeNoCredentialReturningMethod();
 
  private:
-  static const std::array<const QMetaObject*, 11>& controllerMetaObjects();
+  static const std::array<const QMetaObject*, 13>& controllerMetaObjects();
   static bool containsSensitiveTerm(QByteArrayView name);
 };
 
-const std::array<const QMetaObject*, 11>&
+const std::array<const QMetaObject*, 13>&
 SecurityRegressionTest::controllerMetaObjects() {
-  static const std::array<const QMetaObject*, 11> kControllers = {
+  static const std::array<const QMetaObject*, 13> kControllers = {
       &aegis::AgentController::staticMetaObject,
       &aegis::AppController::staticMetaObject,
       &aegis::CalendarController::staticMetaObject,
+      &aegis::ContainerController::staticMetaObject,
       &aegis::CreativeController::staticMetaObject,
       &aegis::CronController::staticMetaObject,
       &aegis::GitController::staticMetaObject,
       &aegis::MemoryController::staticMetaObject,
       &aegis::ModelController::staticMetaObject,
       &aegis::PackageController::staticMetaObject,
+      &aegis::ProcessController::staticMetaObject,
       &aegis::SettingsController::staticMetaObject,
       &aegis::VitalsController::staticMetaObject};
   return kControllers;

@@ -21,6 +21,8 @@ AppContext::AppContext()
           secretStore_.get(), configService_.get(), httpClient_.get())),
       openClawCli_(std::make_unique<OpenClawCli>(configService_.get())),
       vitalsService_(std::make_unique<VitalsService>(configService_.get())),
+      containerService_(std::make_unique<ContainerService>()),
+      processService_(std::make_unique<ProcessService>()),
       calendarStore_(std::make_unique<CalendarStore>(configService_.get())),
       cronService_(std::make_unique<CronService>(openClawCli_.get())),
       memoryService_(std::make_unique<MemoryService>(configService_.get())),
@@ -31,6 +33,10 @@ AppContext::AppContext()
       appController_(std::make_unique<AppController>(gatewayService_.get())),
       agentController_(std::make_unique<AgentController>(openClawCli_.get())),
       vitalsController_(std::make_unique<VitalsController>(vitalsService_.get())),
+      containerController_(
+          std::make_unique<ContainerController>(containerService_.get())),
+      processController_(
+          std::make_unique<ProcessController>(processService_.get())),
       calendarController_(std::make_unique<CalendarController>(calendarStore_.get())),
       cronController_(std::make_unique<CronController>(cronService_.get())),
       memoryController_(std::make_unique<MemoryController>(memoryService_.get())),
@@ -86,6 +92,10 @@ AppContext::AppContext()
   QObject::connect(appController_.get(), &AppController::refreshAllRequested,
                    agentController_.get(), &AgentController::refresh);
   QObject::connect(appController_.get(), &AppController::refreshAllRequested,
+                   containerController_.get(), &ContainerController::refresh);
+  QObject::connect(appController_.get(), &AppController::refreshAllRequested,
+                   processController_.get(), &ProcessController::refresh);
+  QObject::connect(appController_.get(), &AppController::refreshAllRequested,
                    calendarController_.get(), &CalendarController::refresh);
   QObject::connect(appController_.get(), &AppController::refreshAllRequested,
                    cronController_.get(), &CronController::refresh);
@@ -113,6 +123,8 @@ AppContext::AppContext()
                    });
   auto interval = configService_->vitalsIntervalMs();
   vitalsService_->start(std::chrono::milliseconds(interval ? interval.value() : 1000));
+  containerService_->start();
+  processService_->start();
 }
 
 AppContext::~AppContext() {
@@ -127,6 +139,12 @@ HttpClient* AppContext::httpClient() const { return httpClient_.get(); }
 AppController* AppContext::appController() const { return appController_.get(); }
 AgentController* AppContext::agentController() const { return agentController_.get(); }
 VitalsController* AppContext::vitalsController() const { return vitalsController_.get(); }
+ContainerController* AppContext::containerController() const {
+  return containerController_.get();
+}
+ProcessController* AppContext::processController() const {
+  return processController_.get();
+}
 CalendarController* AppContext::calendarController() const { return calendarController_.get(); }
 CronController* AppContext::cronController() const { return cronController_.get(); }
 MemoryController* AppContext::memoryController() const { return memoryController_.get(); }

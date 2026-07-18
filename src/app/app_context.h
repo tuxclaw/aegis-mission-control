@@ -9,14 +9,17 @@
 #include "controllers/agent_controller.h"
 #include "controllers/app_controller.h"
 #include "controllers/calendar_controller.h"
+#include "controllers/container_controller.h"
 #include "controllers/cron_controller.h"
 #include "controllers/git_controller.h"
 #include "controllers/memory_controller.h"
 #include "controllers/model_controller.h"
 #include "controllers/package_controller.h"
+#include "controllers/process_controller.h"
 #include "controllers/settings_controller.h"
 #include "controllers/vitals_controller.h"
 #include "services/calendar_store.h"
+#include "services/container_service.h"
 #include "services/cron_service.h"
 #include "services/gateway_service.h"
 #include "services/git_service.h"
@@ -24,6 +27,7 @@
 #include "services/model_service.h"
 #include "services/openclaw_cli.h"
 #include "services/package_service.h"
+#include "services/process_service.h"
 #include "services/vitals_service.h"
 
 namespace aegis {
@@ -50,6 +54,10 @@ class AppContext {
   [[nodiscard]] AgentController* agentController() const;
   // Returns the system-vitals controller.
   [[nodiscard]] VitalsController* vitalsController() const;
+  // Returns the container-inventory controller.
+  [[nodiscard]] ContainerController* containerController() const;
+  // Returns the top-process controller.
+  [[nodiscard]] ProcessController* processController() const;
   // Returns the calendar controller.
   [[nodiscard]] CalendarController* calendarController() const;
   // Returns the cron controller.
@@ -72,6 +80,8 @@ class AppContext {
   std::unique_ptr<GatewayService> gatewayService_;
   std::unique_ptr<OpenClawCli> openClawCli_;
   std::unique_ptr<VitalsService> vitalsService_;
+  std::unique_ptr<ContainerService> containerService_;
+  std::unique_ptr<ProcessService> processService_;
   std::unique_ptr<CalendarStore> calendarStore_;
   std::unique_ptr<CronService> cronService_;
   std::unique_ptr<MemoryService> memoryService_;
@@ -81,6 +91,8 @@ class AppContext {
   std::unique_ptr<AppController> appController_;
   std::unique_ptr<AgentController> agentController_;
   std::unique_ptr<VitalsController> vitalsController_;
+  std::unique_ptr<ContainerController> containerController_;
+  std::unique_ptr<ProcessController> processController_;
   std::unique_ptr<CalendarController> calendarController_;
   std::unique_ptr<CronController> cronController_;
   std::unique_ptr<MemoryController> memoryController_;
