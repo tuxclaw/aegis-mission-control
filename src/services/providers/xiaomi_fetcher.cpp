@@ -141,6 +141,19 @@ void XiaomiFetcher::resolveCookieAndFetch() {
         }
     }
 
+    // Fallback: try passToken from Xiaomi account cookies.
+    if (rawCookie.isEmpty()) {
+        const QString passToken = m_config->providerCredential(
+            QStringLiteral("xiaomi"), QStringLiteral("passToken"));
+        const QString userId = m_config->providerCredential(
+            QStringLiteral("xiaomi"), QStringLiteral("userId"));
+        if (!passToken.isEmpty() && !userId.isEmpty()) {
+            rawCookie = QStringLiteral(
+                "api-platform_serviceToken=%1; userId=%2")
+                .arg(passToken, userId);
+        }
+    }
+
     if (rawCookie.isEmpty())
         rawCookie = readCookieFromFirefox();
 

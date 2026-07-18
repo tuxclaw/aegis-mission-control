@@ -25,6 +25,9 @@ QString credentialEnvironmentVariable(const QString& id,
   if (id == QStringLiteral("gemini") && key == QStringLiteral("apiKey")) {
     return QStringLiteral("GEMINI_API_KEY");
   }
+  if (id == QStringLiteral("xiaomi") && key == QStringLiteral("passToken")) {
+    return QStringLiteral("XIAOMI_PASS_TOKEN");
+  }
   return {};
 }
 

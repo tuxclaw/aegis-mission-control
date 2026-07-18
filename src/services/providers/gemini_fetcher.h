@@ -2,6 +2,9 @@
 
 #include "services/i_provider_fetcher.h"
 
+#include <QProcess>
+#include <QProcessEnvironment>
+
 class MonitorConfig;
 
 class GeminiFetcher : public IProviderFetcher {
@@ -15,9 +18,5 @@ public:
     void    fetch()             override;
 
 private:
-    void fetchCodeAssist(const QString& accessToken);
-    void fetchQuota(const QString& accessToken, const QString& projectId,
-                    const QString& planName);
-
     const MonitorConfig* m_config;
 };

@@ -1,5 +1,17 @@
 # Build History
 
+## [2026-07-18] Gemini CLI and Xiaomi passToken Follow-up
+**Agent:** Helen 🦸‍♀️
+**Branch:** `main` (explicit task requirement)
+
+- Replaced Gemini's internal OAuth HTTP quota calls with a Gemini CLI API-key availability probe using `--skip-trust` and a process-local `GEMINI_API_KEY`.
+- Added Xiaomi `passToken` fallback after existing cookie and service-token credentials, plus explicit environment/config credential mapping.
+- Re-enabled Xiaomi in the local monitor config with the Firefox account token and user ID without committing credentials.
+- Verified a successful GUI/test build, all 12 QtTest suites, and an exact `OK` response from the Gemini CLI.
+- A live Xiaomi balance request returned HTTP/API 401, confirming that the account `passToken` is attempted correctly but is not accepted as a platform service token.
+
+**Status:** Complete; Xiaomi requires a platform login for successful quota data
+
 ## [2026-07-18] Provider Quota Fetcher Repair
 **Agent:** Helen 🦸‍♀️
 **Branch:** `main` (explicit task requirement)

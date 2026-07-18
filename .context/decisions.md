@@ -1,9 +1,15 @@
 # Decisions
 
+## [2026-07-18] Gemini API-Key Availability Probe and Xiaomi Account Fallback
+**By:** Helen 🦸‍♀️
+**Context:** Gemini's internal OAuth quota endpoint was unreliable for the configured API-key workflow, while the available Firefox Xiaomi cookies contain an account `passToken` rather than a platform service token.
+**Decision:** Verify Gemini API-key availability through the installed Gemini CLI with an isolated `GEMINI_API_KEY` process environment. Permit Xiaomi `passToken` as a last-resort cookie value while preserving service-token precedence and reporting authentication failures honestly.
+**Status:** Active
+
 ## [2026-07-18] Provider Usage Sources Follow Subscription Auth Surfaces
 **By:** Helen 🦸‍♀️
 **Context:** The initial quota port called nonexistent or legacy billing endpoints and used inference probes as quota checks.
-**Decision:** Use Claude and Codex subscription OAuth usage endpoints, Gemini CLI OAuth quota when available, Grok local session accounting when the CLI billing RPC is unavailable, and explicit data-unavailable errors for auth modes without a supported quota surface. Keep Xiaomi MiMo on its browser-cookie platform endpoints with normalized manual cookie input.
+**Decision:** Use Claude and Codex subscription OAuth usage endpoints, Grok local session accounting when the CLI billing RPC is unavailable, and explicit data-unavailable errors for auth modes without a supported quota surface. Keep Xiaomi MiMo on its browser-cookie platform endpoints with normalized manual cookie input. Gemini's current API-key behavior is superseded by the decision above.
 **Alternatives considered:** Legacy OpenAI dashboard billing endpoints, Anthropic `/v1/usage`, Grok `usage` CLI command, and Gemini `generateContent` probes; all are unsupported or do not represent subscription quota.
 **Status:** Active
 
