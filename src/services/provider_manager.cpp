@@ -6,6 +6,10 @@
 #include "services/providers/xiaomi_fetcher.h"
 #include "services/providers/minimax_fetcher.h"
 #include "services/providers/codexbar_fetcher.h"
+#include "services/providers/openai_fetcher.h"
+#include "services/providers/anthropic_fetcher.h"
+#include "services/providers/grok_fetcher.h"
+#include "services/providers/gemini_fetcher.h"
 
 #include <QDateTime>
 #include <QNetworkAccessManager>
@@ -35,15 +39,13 @@ ProviderManager::ProviderManager(const MonitorConfig* config, QObject* parent)
         connect(xiaomi, &IProviderFetcher::failed, this, &ProviderManager::onFetcherFailed);
     }
     if (config->providerEnabled(QStringLiteral("openai"))) {
-        auto* openai = new CodexBarFetcher(config, QStringLiteral("openai"),
-                                           QStringLiteral("Codex"), m_nam, this);
+        auto* openai = new OpenAIFetcher(config, m_nam, this);
         m_fetchers.append(openai);
         connect(openai, &IProviderFetcher::done, this, &ProviderManager::onFetcherDone);
         connect(openai, &IProviderFetcher::failed, this, &ProviderManager::onFetcherFailed);
     }
     if (config->providerEnabled(QStringLiteral("anthropic"))) {
-        auto* anthropic = new CodexBarFetcher(config, QStringLiteral("anthropic"),
-                                              QStringLiteral("Claude"), m_nam, this);
+        auto* anthropic = new AnthropicFetcher(config, m_nam, this);
         m_fetchers.append(anthropic);
         connect(anthropic, &IProviderFetcher::done, this, &ProviderManager::onFetcherDone);
         connect(anthropic, &IProviderFetcher::failed, this, &ProviderManager::onFetcherFailed);
@@ -55,15 +57,13 @@ ProviderManager::ProviderManager(const MonitorConfig* config, QObject* parent)
         connect(minimax, &IProviderFetcher::failed, this, &ProviderManager::onFetcherFailed);
     }
     if (config->providerEnabled(QStringLiteral("xai"))) {
-        auto* xai = new CodexBarFetcher(config, QStringLiteral("xai"),
-                                        QStringLiteral("Grok"), m_nam, this);
+        auto* xai = new GrokFetcher(config, m_nam, this);
         m_fetchers.append(xai);
         connect(xai, &IProviderFetcher::done, this, &ProviderManager::onFetcherDone);
         connect(xai, &IProviderFetcher::failed, this, &ProviderManager::onFetcherFailed);
     }
     if (config->providerEnabled(QStringLiteral("gemini"))) {
-        auto* gemini = new CodexBarFetcher(config, QStringLiteral("gemini"),
-                                           QStringLiteral("Gemini"), m_nam, this);
+        auto* gemini = new GeminiFetcher(config, m_nam, this);
         m_fetchers.append(gemini);
         connect(gemini, &IProviderFetcher::done, this, &ProviderManager::onFetcherDone);
         connect(gemini, &IProviderFetcher::failed, this, &ProviderManager::onFetcherFailed);
