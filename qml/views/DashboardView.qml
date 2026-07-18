@@ -146,12 +146,13 @@ Item {
                     Layout.fillWidth: true
                     Layout.minimumWidth: Theme.minimumCardWidth
                     Layout.minimumHeight: Theme.contentMinimumHeight
-                    Layout.preferredHeight: Math.max(Theme.contentMinimumHeight, containerList.contentHeight + Theme.cardPadding * 2)
+                    Layout.preferredHeight: Math.min(Theme.contentMinimumHeight * 2, Math.max(Theme.contentMinimumHeight, containerList.contentHeight + Theme.cardPadding * 2))
+                    clip: true
 
                     ListView {
                         id: containerList
                         width: parent.width
-                        height: Math.max(Theme.contentMinimumHeight - Theme.cardPadding * 2, contentHeight)
+                        height: Math.min(parent.height - Theme.cardPadding * 2, Math.max(Theme.contentMinimumHeight - Theme.cardPadding * 2, contentHeight))
                         model: Containers.items
                         spacing: Theme.space.md
                         boundsBehavior: Flickable.StopAtBounds
@@ -237,12 +238,13 @@ Item {
                     Layout.fillWidth: true
                     Layout.minimumWidth: Theme.minimumCardWidth
                     Layout.minimumHeight: Theme.contentMinimumHeight
-                    Layout.preferredHeight: Math.max(Theme.contentMinimumHeight, processList.contentHeight + Theme.cardPadding * 2)
+                    Layout.preferredHeight: Math.min(Theme.contentMinimumHeight * 2, Math.max(Theme.contentMinimumHeight, processList.contentHeight + Theme.cardPadding * 2))
+                    clip: true
 
                     ListView {
                         id: processList
                         width: parent.width
-                        height: Math.max(Theme.contentMinimumHeight - Theme.cardPadding * 2, contentHeight)
+                        height: Math.min(parent.height - Theme.cardPadding * 2, Math.max(Theme.contentMinimumHeight - Theme.cardPadding * 2, contentHeight))
                         model: Stats.topProcesses
                         spacing: Theme.space.md
                         boundsBehavior: Flickable.StopAtBounds
