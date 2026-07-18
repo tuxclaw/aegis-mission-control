@@ -13,34 +13,34 @@ Item {
     property Item backdrop: null
     signal openAgentsRequested
 
-    property string errorMessage: ""
-    property bool retryable: false
-    readonly property bool loading: agents.loading
+    readonly property string errorMessage: Agents.error
+    readonly property bool retryable: Agents.error.length > 0
+    readonly property bool loading: !Agents.available
 
     function refreshView() {
-        errorMessage = "";
-        agents.refresh();
+        Agents.refresh();
         Containers.refresh();
-        Processes.refresh();
         app.refreshAll();
     }
 
     function statusName(value) {
-        if (value === AgentStatus.Active)
+        const state = String(value).toLowerCase();
+        if (state === "active")
             return qsTr("active");
-        if (value === AgentStatus.Idle)
+        if (state === "idle")
             return qsTr("idle");
-        if (value === AgentStatus.Error)
+        if (state === "error")
             return qsTr("error");
         return qsTr("unknown");
     }
 
     function ringStatus(value) {
-        if (value === AgentStatus.Active)
+        const state = String(value).toLowerCase();
+        if (state === "active")
             return StatusRing.Active;
-        if (value === AgentStatus.Idle)
+        if (state === "idle")
             return StatusRing.Idle;
-        if (value === AgentStatus.Error)
+        if (state === "error")
             return StatusRing.Error;
         return StatusRing.Unknown;
     }
@@ -59,14 +59,6 @@ Item {
 
     function formatPercent(value) {
         return hasFiniteValue(value) ? qsTr("%1%").arg(Math.max(0, value).toFixed(1)) : qsTr("n/a");
-    }
-
-    Connections {
-        target: agents
-        function onErrorRaised(message, canRetry) {
-            root.errorMessage = message;
-            root.retryable = canRetry;
-        }
     }
 
     ScrollView {
@@ -101,41 +93,31 @@ Item {
                         VitalGauge {
                             anchors.horizontalCenter: parent.horizontalCenter
                             label: vitalCard.index === 0 ? qsTr("CPU") : vitalCard.index === 1 ? qsTr("GPU") : vitalCard.index === 2 ? qsTr("Memory") : qsTr("Network")
-                            value: vitalCard.index === 0 ? vitals.cpuPct : vitalCard.index === 1 ? vitals.gpuPct : vitalCard.index === 2 ? vitals.memPct : Number.NaN
-                            available: vitalCard.index === 1 ? root.hasFiniteValue(vitals.gpuPct) : vitalCard.index === 3 ? vitals.netModel !== null : true
-                            subtext: vitalCard.index === 1 && root.hasFiniteValue(vitals.gpuPct) ? vitals.gpuVendor : vitalCard.index === 2 ? qsTr("%1 / %2").arg(vitals.memUsed).arg(vitals.memTotal) : vitalCard.index === 3 ? qsTr("live throughput") : vitalCard.index === 0 ? qsTr("system load") : ""
+                            value: vitalCard.index === 0 ? Stats.cpuUsage * 100 : vitalCard.index === 1 ? Stats.gpuBusy * 100 : vitalCard.index === 2 && Stats.memTotalGiB > 0 ? Stats.memUsedGiB / Stats.memTotalGiB * 100 : Number.NaN
+                            available: vitalCard.index !== 2 || Stats.memTotalGiB > 0
+                            subtext: vitalCard.index === 1 && Stats.gpuTemp > 0 ? qsTr("%1 °C").arg(Stats.gpuTemp.toFixed(1)) : vitalCard.index === 2 ? qsTr("%1 / %2").arg(Stats.memUsedGiB.toFixed(1) + " GiB").arg(Stats.memTotalGiB.toFixed(1) + " GiB") : vitalCard.index === 3 ? qsTr("live throughput") : vitalCard.index === 0 ? qsTr("system load") : ""
                             accentColor: vitalCard.index === 2 ? Theme.ok : Theme.accent
                         }
 
-                        ListView {
+                        RowLayout {
                             width: parent.width
                             height: vitalCard.index === 3 ? Theme.skeletonRowHeight : 0
                             visible: vitalCard.index === 3
-                            model: vitals.netModel
-                            boundsBehavior: Flickable.StopAtBounds
-                            clip: true
-                            delegate: RowLayout {
-                                id: networkRow
-                                required property string iface
-                                required property real rxBytesPerSec
-                                required property real txBytesPerSec
-                                width: ListView.view.width
-                                Text {
-                                    Layout.fillWidth: true
-                                    text: networkRow.iface
-                                    color: Theme.textMuted
-                                    elide: Text.ElideRight
-                                    font.family: Typography.dataSmall.family
-                                    font.pixelSize: Typography.dataSmall.pixelSize
-                                    font.weight: Typography.dataSmall.weight
-                                }
-                                Text {
-                                    text: qsTr("↑ %1  ↓ %2").arg(root.formatRate(networkRow.txBytesPerSec)).arg(root.formatRate(networkRow.rxBytesPerSec))
-                                    color: Theme.textSecondary
-                                    font.family: Typography.dataSmall.family
-                                    font.pixelSize: Typography.dataSmall.pixelSize
-                                    font.weight: Typography.dataSmall.weight
-                                }
+                            Text {
+                                Layout.fillWidth: true
+                                text: qsTr("aggregate")
+                                color: Theme.textMuted
+                                elide: Text.ElideRight
+                                font.family: Typography.dataSmall.family
+                                font.pixelSize: Typography.dataSmall.pixelSize
+                                font.weight: Typography.dataSmall.weight
+                            }
+                            Text {
+                                text: qsTr("↑ %1  ↓ %2").arg(root.formatRate(Stats.netTx)).arg(root.formatRate(Stats.netRx))
+                                color: Theme.textSecondary
+                                font.family: Typography.dataSmall.family
+                                font.pixelSize: Typography.dataSmall.pixelSize
+                                font.weight: Typography.dataSmall.weight
                             }
                         }
                     }
@@ -162,17 +144,18 @@ Item {
                         id: containerList
                         width: parent.width
                         height: Math.max(Theme.contentMinimumHeight - Theme.cardPadding * 2, contentHeight)
-                        model: Containers.containers
+                        model: Containers.items
                         spacing: Theme.space.md
                         boundsBehavior: Flickable.StopAtBounds
                         clip: true
 
                         delegate: RowLayout {
                             id: containerRow
-                            required property string name
-                            required property string image
-                            required property string status
-                            required property string ports
+                            required property var modelData
+                            readonly property string containerName: String(modelData.name || "")
+                            readonly property string imageName: String(modelData.image || "")
+                            readonly property string containerState: String(modelData.state || "")
+                            readonly property string statusText: String(modelData.status || "")
                             width: containerList.width
                             spacing: Theme.space.md
 
@@ -181,7 +164,7 @@ Item {
                                 implicitWidth: Theme.statusDotSize
                                 implicitHeight: Theme.statusDotSize
                                 radius: Theme.radiusPill
-                                color: containerRow.status.toLowerCase() === "running" ? Theme.ok : Theme.textMuted
+                                color: containerRow.containerState.toLowerCase() === "running" || containerRow.statusText.toLowerCase().startsWith("up") ? Theme.ok : Theme.textMuted
                             }
 
                             ColumnLayout {
@@ -190,7 +173,7 @@ Item {
 
                                 Text {
                                     Layout.fillWidth: true
-                                    text: containerRow.name
+                                    text: containerRow.containerName
                                     textFormat: Text.PlainText
                                     color: Theme.textPrimary
                                     elide: Text.ElideRight
@@ -200,7 +183,7 @@ Item {
                                 }
                                 Text {
                                     Layout.fillWidth: true
-                                    text: containerRow.image
+                                    text: containerRow.imageName
                                     textFormat: Text.PlainText
                                     color: Theme.textSecondary
                                     elide: Text.ElideMiddle
@@ -212,8 +195,8 @@ Item {
 
                             Text {
                                 Layout.preferredWidth: Theme.splitPaneMinimumWidth / 2
-                                visible: containerRow.ports.length > 0
-                                text: containerRow.ports
+                                visible: containerRow.statusText.length > 0
+                                text: containerRow.statusText
                                 textFormat: Text.PlainText
                                 color: Theme.textMuted
                                 horizontalAlignment: Text.AlignRight
@@ -226,14 +209,14 @@ Item {
 
                         EmptyState {
                             anchors.centerIn: parent
-                            visible: containerList.count === 0 && !Containers.loading
+                            visible: containerList.count === 0 && Boolean(Containers.available)
                             title: qsTr("No containers found")
                             detail: qsTr("Containers will appear here when they are available.")
                         }
 
                         LoadingState {
                             anchors.fill: parent
-                            visible: Containers.loading
+                            visible: !Containers.available
                         }
                     }
                 }
@@ -252,17 +235,18 @@ Item {
                         id: processList
                         width: parent.width
                         height: Math.max(Theme.contentMinimumHeight - Theme.cardPadding * 2, contentHeight)
-                        model: Processes.processes
+                        model: Stats.topProcesses
                         spacing: Theme.space.md
                         boundsBehavior: Flickable.StopAtBounds
                         clip: true
 
                         delegate: RowLayout {
                             id: processRow
-                            required property string name
-                            required property string user
-                            required property real cpuPct
-                            required property real memPct
+                            required property var modelData
+                            readonly property int processPid: Number(modelData.pid || 0)
+                            readonly property string processName: String(modelData.name || "")
+                            readonly property real processCpu: Number(modelData.cpu || 0)
+                            readonly property real processMemMiB: Number(modelData.memMiB || 0)
                             width: processList.width
                             spacing: Theme.space.md
 
@@ -272,7 +256,7 @@ Item {
 
                                 Text {
                                     Layout.fillWidth: true
-                                    text: processRow.name
+                                    text: processRow.processName
                                     textFormat: Text.PlainText
                                     color: Theme.textPrimary
                                     elide: Text.ElideRight
@@ -282,7 +266,7 @@ Item {
                                 }
                                 Text {
                                     Layout.fillWidth: true
-                                    text: processRow.user
+                                    text: qsTr("PID %1").arg(processRow.processPid)
                                     textFormat: Text.PlainText
                                     color: Theme.textSecondary
                                     elide: Text.ElideRight
@@ -298,8 +282,8 @@ Item {
 
                                 Text {
                                     Layout.fillWidth: true
-                                    text: root.formatPercent(processRow.cpuPct)
-                                    color: !root.hasFiniteValue(processRow.cpuPct) ? Theme.textMuted : processRow.cpuPct > 50 ? Theme.alert : processRow.cpuPct > 25 ? Theme.warn : Theme.ok
+                                    text: root.formatPercent(processRow.processCpu * 100)
+                                    color: !root.hasFiniteValue(processRow.processCpu) ? Theme.textMuted : processRow.processCpu > 0.5 ? Theme.alert : processRow.processCpu > 0.25 ? Theme.warn : Theme.ok
                                     horizontalAlignment: Text.AlignRight
                                     font.family: Typography.data.family
                                     font.pixelSize: Typography.data.pixelSize
@@ -322,8 +306,8 @@ Item {
 
                                 Text {
                                     Layout.fillWidth: true
-                                    text: root.formatPercent(processRow.memPct)
-                                    color: root.hasFiniteValue(processRow.memPct) ? Theme.textSecondary : Theme.textMuted
+                                    text: root.hasFiniteValue(processRow.processMemMiB) ? qsTr("%1 MiB").arg(processRow.processMemMiB.toFixed(1)) : qsTr("n/a")
+                                    color: root.hasFiniteValue(processRow.processMemMiB) ? Theme.textSecondary : Theme.textMuted
                                     horizontalAlignment: Text.AlignRight
                                     font.family: Typography.data.family
                                     font.pixelSize: Typography.data.pixelSize
@@ -343,15 +327,11 @@ Item {
 
                         EmptyState {
                             anchors.centerIn: parent
-                            visible: processList.count === 0 && !Processes.loading
+                            visible: processList.count === 0
                             title: qsTr("No processes found")
                             detail: qsTr("Process activity will appear after the next refresh.")
                         }
 
-                        LoadingState {
-                            anchors.fill: parent
-                            visible: Processes.loading
-                        }
                     }
                 }
             }
@@ -457,28 +437,29 @@ Item {
                         id: fleetList
                         width: parent.width
                         height: Math.max(Theme.contentMinimumHeight - Theme.cardPadding * 2, contentHeight)
-                        model: agents.agents
+                        model: Agents.items
                         spacing: Theme.space.sm
                         boundsBehavior: Flickable.StopAtBounds
                         clip: true
 
                         delegate: RowLayout {
                             id: agentRow
-                            required property string displayName
-                            required property string model
-                            required property int status
+                            required property var modelData
+                            readonly property string agentName: String(modelData.name || "")
+                            readonly property string agentModel: String(modelData.model || "")
+                            readonly property string agentState: String(modelData.state || "")
                             width: fleetList.width
                             spacing: Theme.space.md
-                            Accessible.name: qsTr("Open agent roster for %1").arg(agentRow.displayName)
+                            Accessible.name: qsTr("Open agent roster for %1").arg(agentRow.agentName)
                             Accessible.role: Accessible.Button
 
                             StatusRing {
                                 size: Theme.compactButtonSize
-                                status: root.ringStatus(agentRow.status)
+                                status: root.ringStatus(agentRow.agentState)
                             }
                             Text {
                                 Layout.fillWidth: true
-                                text: agentRow.displayName
+                                text: agentRow.agentName
                                 color: Theme.textPrimary
                                 elide: Text.ElideRight
                                 font.family: Typography.label.family
@@ -486,15 +467,15 @@ Item {
                                 font.weight: Typography.label.weight
                             }
                             Text {
-                                text: root.statusName(agentRow.status)
-                                color: agentRow.status === AgentStatus.Active ? Theme.accent : agentRow.status === AgentStatus.Idle ? Theme.warn : agentRow.status === AgentStatus.Error ? Theme.alert : Theme.textMuted
+                                text: root.statusName(agentRow.agentState)
+                                color: agentRow.agentState.toLowerCase() === "active" ? Theme.accent : agentRow.agentState.toLowerCase() === "idle" ? Theme.warn : agentRow.agentState.toLowerCase() === "error" ? Theme.alert : Theme.textMuted
                                 font.family: Typography.caption.family
                                 font.pixelSize: Typography.caption.pixelSize
                                 font.weight: Typography.caption.weight
                             }
                             Text {
                                 Layout.preferredWidth: Theme.splitPaneMinimumWidth / 3
-                                text: agentRow.model.length > 0 ? agentRow.model : qsTr("n/a")
+                                text: agentRow.agentModel.length > 0 ? agentRow.agentModel : qsTr("n/a")
                                 color: Theme.textSecondary
                                 elide: Text.ElideMiddle
                                 font.family: Typography.dataSmall.family
@@ -521,7 +502,7 @@ Item {
 
     LoadingState {
         anchors.fill: parent
-        visible: root.loading && fleetList.count === 0
+        visible: root.loading && root.errorMessage.length === 0 && fleetList.count === 0
     }
 
     ErrorState {

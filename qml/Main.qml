@@ -360,7 +360,7 @@ ApplicationWindow {
                             iconSource: iconPath
                             showLabel: root.sidebarExpanded
                             active: app.activeView === index
-                            badgeText: index === 1 && agents.activeCount > 0 ? String(agents.activeCount) : index === 7 && !git.clean ? "•" : ""
+                            badgeText: index === 1 && Agents.items.filter(function(item) { return String(item.state).toLowerCase() === "active"; }).length > 0 ? String(Agents.items.filter(function(item) { return String(item.state).toLowerCase() === "active"; }).length) : index === 7 && !git.clean ? "•" : ""
                             badgeColor: index === 7 ? Theme.warn : Theme.accent
                             onClicked: root.selectView(index)
                         }
@@ -501,8 +501,8 @@ ApplicationWindow {
             backdrop: scene
             connectionState: root.connectionKey()
             connectionLabel: root.connectionLabel()
-            activeAgents: agents.activeCount
-            totalAgents: agents.totalCount
+            activeAgents: Agents.items.filter(function(item) { return String(item.state).toLowerCase() === "active"; }).length
+            totalAgents: Agents.items.length
             cpuPercent: vitals.cpuPct
             memoryPercent: vitals.memPct
             lastSync: app.lastSyncTime ? Qt.formatTime(app.lastSyncTime, "HH:mm:ss") : qsTr("Never")

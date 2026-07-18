@@ -133,15 +133,46 @@ endif()
 aegis_enable_warnings(aegis_core)
 
 if(AEGIS_GUI_AVAILABLE)
+  # The imported Fable sources retain their CamelCase local includes while
+  # living under the project's lowercase service filenames. SystemStats also
+  # has a literal "*/" in a documentation path, so sanitize only the generated
+  # build header while preserving the imported source byte-for-byte.
+  file(READ services/system_stats.h FABLE_SYSTEM_STATS_HEADER)
+  string(REPLACE "card*/device" "card* /device"
+    FABLE_SYSTEM_STATS_HEADER "${FABLE_SYSTEM_STATS_HEADER}")
+  file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/SystemStats.h"
+    "${FABLE_SYSTEM_STATS_HEADER}")
+  configure_file(services/container_list.h
+    "${CMAKE_CURRENT_BINARY_DIR}/ContainerList.h" COPYONLY)
+  configure_file(services/agent_roster.h
+    "${CMAKE_CURRENT_BINARY_DIR}/AgentRoster.h" COPYONLY)
+
+  qt6_wrap_cpp(AEGIS_GUI_MOC_SOURCES
+    app/qml_registration.h
+    "${CMAKE_CURRENT_BINARY_DIR}/SystemStats.h"
+    "${CMAKE_CURRENT_BINARY_DIR}/ContainerList.h"
+    "${CMAKE_CURRENT_BINARY_DIR}/AgentRoster.h"
+  )
+
   qt_add_executable(aegis
     app/qml_registration.cpp
     app/qml_registration.h
     main.cpp
+    services/system_stats.cpp
+    "${CMAKE_CURRENT_BINARY_DIR}/SystemStats.h"
+    services/container_list.cpp
+    "${CMAKE_CURRENT_BINARY_DIR}/ContainerList.h"
+    services/agent_roster.cpp
+    "${CMAKE_CURRENT_BINARY_DIR}/AgentRoster.h"
+    ${AEGIS_GUI_MOC_SOURCES}
     "${PROJECT_SOURCE_DIR}/resources/aegis.qrc"
   )
+  set_target_properties(aegis PROPERTIES AUTOMOC OFF)
+  target_include_directories(aegis PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
   target_link_libraries(aegis PRIVATE
     aegis_core
     Qt6::Gui
+    Qt6::Network
     Qt6::Qml
     Qt6::Quick
     Qt6::QuickControls2

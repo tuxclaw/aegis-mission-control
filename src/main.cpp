@@ -1,13 +1,18 @@
 #include <cstdlib>
 
+#include <QDir>
 #include <QFontDatabase>
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
+#include <QQmlContext>
 #include <QUrl>
 
 #include "app/app_context.h"
 #include "app/qml_registration.h"
 #include "core/logging.h"
+#include "SystemStats.h"
+#include "services/agent_roster.h"
+#include "services/container_list.h"
 
 int main(int argc, char* argv[]) {
   QCoreApplication::setOrganizationName(QStringLiteral("Aegis"));
@@ -28,6 +33,19 @@ int main(int argc, char* argv[]) {
   QQmlApplicationEngine engine;
   engine.addImportPath(QStringLiteral("qrc:/qt/qml"));
   aegis::QmlRegistration::registerContext(&engine, &appContext);
+
+  SystemStats stats;
+  ContainerList containers;
+  AgentRoster agents;
+  agents.setSource(qEnvironmentVariable(
+      "AGENTS_SOURCE",
+      QDir::homePath() + QStringLiteral("/.openclaw/agents.json")));
+
+  engine.rootContext()->setContextProperty(QStringLiteral("Stats"), &stats);
+  engine.rootContext()->setContextProperty(QStringLiteral("Containers"),
+                                           &containers);
+  engine.rootContext()->setContextProperty(QStringLiteral("Agents"), &agents);
+
   const QUrl mainUrl(QStringLiteral("qrc:/qml/Main.qml"));
   QObject::connect(
       &engine, &QQmlApplicationEngine::objectCreated, &application,
