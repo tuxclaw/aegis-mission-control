@@ -103,14 +103,19 @@ dto::GpuVitals readGpu() {
 }
 
 Result<dto::DiskVitals> readRootDisk() {
+  // On Bazzite/immutable, / is composefs (tiny overlay). Use /var for real disk.
+  const auto path = QStringLiteral("/var");
   struct statvfs diskInfo {};
-  if (statvfs("/", &diskInfo) != 0) {
-    const auto errorNumber = errno;
-    qCWarning(aegisVitalsLog)
-        << "statvfs failed for /" << errorNumber
-        << qt_error_string(errorNumber);
-    return tl::unexpected(makeError(ErrorCode::PathNotFound,
-                                    QStringLiteral("disk statistics unavailable")));
+  if (statvfs(path.toUtf8().constData(), &diskInfo) != 0) {
+    // Fallback to / if /var fails
+    if (statvfs("/", &diskInfo) != 0) {
+      const auto errorNumber = errno;
+      qCWarning(aegisVitalsLog)
+          << "statvfs failed" << errorNumber
+          << qt_error_string(errorNumber);
+      return tl::unexpected(makeError(ErrorCode::PathNotFound,
+                                      QStringLiteral("disk statistics unavailable")));
+    }
   }
   const auto fragmentSize = static_cast<quint64>(diskInfo.f_frsize);
   const auto total = static_cast<quint64>(diskInfo.f_blocks) * fragmentSize;

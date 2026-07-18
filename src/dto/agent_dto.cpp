@@ -74,16 +74,6 @@ Result<AgentDto> AgentDto::fromJson(const QJsonObject& object) {
     const auto value = json::optionalString(object, key, 4096, true);
     if (!value) return tl::unexpected(value.error());
   }
-  if (object.contains(QStringLiteral("bindings"))) {
-    const auto bindings = json::requiredInt(
-        object, QStringLiteral("bindings"), 0, 100000);
-    if (!bindings) return tl::unexpected(bindings.error());
-  }
-  if (object.contains(QStringLiteral("isDefault"))) {
-    const auto isDefault =
-        json::requiredBool(object, QStringLiteral("isDefault"));
-    if (!isDefault) return tl::unexpected(isDefault.error());
-  }
 
   const auto displayName = !name->isEmpty()
                                ? name.value()
@@ -91,8 +81,28 @@ Result<AgentDto> AgentDto::fromJson(const QJsonObject& object) {
                                                            : id.value());
   const auto avatarSeed = identityEmoji->isEmpty() ? id.value()
                                                     : identityEmoji.value();
-  const auto status = statusText->isEmpty() ? AgentStatus::Idle
-                                             : parseStatus(statusText.value());
+
+  // CLI has no status field — derive from bindings/isDefault
+  int bindings = 0;
+  if (object.contains(QStringLiteral("bindings"))) {
+    const auto parsed = json::requiredInt(
+        object, QStringLiteral("bindings"), 0, 100000);
+    if (parsed) bindings = parsed.value();
+  }
+  bool isDefault = false;
+  if (object.contains(QStringLiteral("isDefault"))) {
+    const auto parsed = json::requiredBool(object, QStringLiteral("isDefault"));
+    if (parsed) isDefault = parsed.value();
+  }
+
+  AgentStatus status;
+  if (!statusText->isEmpty()) {
+    status = parseStatus(statusText.value());
+  } else if (isDefault || bindings > 0) {
+    status = AgentStatus::Active;
+  } else {
+    status = AgentStatus::Idle;
+  }
 
   return AgentDto{id.value(), displayName, model.value(), status,
                   statusDetail.value(), lastSeen.value(), activeSessions,
