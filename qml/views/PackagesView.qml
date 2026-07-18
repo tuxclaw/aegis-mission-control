@@ -63,6 +63,8 @@ Item {
                     color: Theme.bgElevated
                     border.width: Theme.borderWidth
                     border.color: Theme.divider
+                    radius: Theme.radiusCard
+                    clip: true
                     RowLayout {
                         anchors {
                             fill: parent
@@ -162,6 +164,8 @@ Item {
                     color: Theme.bgElevated
                     border.width: Theme.borderWidth
                     border.color: Theme.divider
+                    radius: Theme.radiusCard
+                    clip: true
                     Text {
                         anchors {
                             left: parent.left
