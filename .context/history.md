@@ -1,5 +1,16 @@
 # Build History
 
+## [2026-07-18] Provider Usage Page Frontend
+**Agent:** Dash ⚡
+**Branch:** `main` (explicit task requirement)
+
+- Added a responsive one-, two-, or three-column provider quota grid with animated threshold-colored usage bars, token summaries, balances, fetch timestamps, and provider/global error states.
+- Added Usage at navigation index 8, shifted Settings to index 9, and wired both view-level and shell-level refresh actions to the forthcoming `Usage` singleton.
+- Added the Usage chart icon and registered the new view and icon in the QML/resource manifests.
+- Verified QML parsing, XML/SVG validation, a successful GUI build, and all 12 QtTest executables. The offscreen smoke test reaches the new view but awaits the parallel backend singleton registration before it can resolve `Usage`.
+
+**Status:** Frontend complete; backend integration pending
+
 ## [2026-07-18] Liquid Glass UI Integration
 **Agent:** Dash ⚡
 **Branch:** `main` (explicit task requirement)

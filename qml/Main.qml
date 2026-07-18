@@ -45,6 +45,8 @@ ApplicationWindow {
             packagesView.refreshView();
         else if (app.activeView === 7)
             gitView.refreshView();
+        else if (app.activeView === 8)
+            usageView.refreshView();
         else
             settingsView.refreshView();
     }
@@ -91,6 +93,10 @@ ApplicationWindow {
             name: "Git"
             iconPath: "qrc:/icons/git-branch.svg"
         }
+        ListElement {
+            name: "Usage"
+            iconPath: "qrc:/icons/usage.svg"
+        }
     }
 
     ListModel {
@@ -118,6 +124,9 @@ ApplicationWindow {
         }
         ListElement {
             name: "Git"
+        }
+        ListElement {
+            name: "Usage"
         }
         ListElement {
             name: "Settings"
@@ -385,8 +394,8 @@ ApplicationWindow {
                         label: qsTr("Settings")
                         iconSource: "qrc:/icons/settings.svg"
                         showLabel: root.sidebarExpanded
-                        active: app.activeView === 8
-                        onClicked: root.selectView(8)
+                        active: app.activeView === 9
+                        onClicked: root.selectView(9)
                     }
                     GhostButton {
                         width: parent.width
@@ -481,7 +490,11 @@ ApplicationWindow {
                     GitView {
                         id: gitView
                         backdrop: scene
-                        onOpenSettingsRequested: root.selectView(8)
+                        onOpenSettingsRequested: root.selectView(9)
+                    }
+                    UsageView {
+                        id: usageView
+                        backdrop: scene
                     }
                     SettingsView {
                         id: settingsView

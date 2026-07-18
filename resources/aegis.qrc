@@ -38,6 +38,7 @@
     <file alias="views/ModelView.qml">../qml/views/ModelView.qml</file>
     <file alias="views/PackagesView.qml">../qml/views/PackagesView.qml</file>
     <file alias="views/GitView.qml">../qml/views/GitView.qml</file>
+    <file alias="views/UsageView.qml">../qml/views/UsageView.qml</file>
     <file alias="views/SettingsView.qml">../qml/views/SettingsView.qml</file>
   </qresource>
   <qresource prefix="/qt/qml">
@@ -60,6 +61,7 @@
     <file alias="models.svg">icons/models.svg</file>
     <file alias="package.svg">icons/package.svg</file>
     <file alias="git-branch.svg">icons/git-branch.svg</file>
+    <file alias="usage.svg">icons/usage.svg</file>
     <file alias="settings.svg">icons/settings.svg</file>
   </qresource>
   <qresource prefix="/fonts">
