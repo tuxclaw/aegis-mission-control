@@ -1,5 +1,18 @@
 # Build History
 
+## [2026-07-18] Provider Quota Fetcher Repair
+**Agent:** Helen 🦸‍♀️
+**Branch:** `main` (explicit task requirement)
+
+- Replaced Anthropic's nonexistent `/v1/usage` call with the Claude OAuth usage endpoint and mapped five-hour, weekly, scoped, and extra-usage windows.
+- Replaced legacy OpenAI dashboard billing calls with the Codex OAuth subscription usage endpoint and its primary/weekly rate-limit schema.
+- Removed the nonexistent Grok `usage` subcommand and added honest 30-day local session accounting from `~/.grok/sessions/**/signals.json`.
+- Removed Gemini's quota-consuming `generateContent` probe, added Gemini CLI OAuth quota support, and made API-key-only installs report that quota data is unavailable.
+- Normalized Xiaomi MiMo Cookie headers/copied curl commands, accepted split cookie credentials, scanned all Firefox profiles, and hardened partial/error response parsing.
+- Verified a warnings-as-errors GUI/test build, all 12 QtTest suites, a live provider probe, and an offscreen runtime smoke test.
+
+**Status:** Complete
+
 ## [2026-07-18] Provider Usage Page Frontend
 **Agent:** Dash ⚡
 **Branch:** `main` (explicit task requirement)

@@ -1,178 +1,112 @@
 #include "services/providers/grok_fetcher.h"
 
-#include "services/monitor_config.h"
-
+#include <QDateTime>
+#include <QDir>
+#include <QDirIterator>
+#include <QFile>
 #include <QFileInfo>
+#include <QHash>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QProcess>
-#include <QRegularExpression>
-#include <QStandardPaths>
-#include <QTimer>
 
-GrokFetcher::GrokFetcher(const MonitorConfig* config, QNetworkAccessManager* nam,
+namespace {
+
+constexpr int kLookbackDays = 30;
+
+void countModel(QHash<QString, int>& counts, const QString& raw) {
+    const QString model = raw.trimmed();
+    if (!model.isEmpty())
+        counts[model] += 1;
+}
+
+}  // namespace
+
+GrokFetcher::GrokFetcher(const MonitorConfig* config,
+                         QNetworkAccessManager* nam,
                          QObject* parent)
-    : IProviderFetcher(nam, parent), m_config(config) {}
+    : IProviderFetcher(nam, parent) {
+    Q_UNUSED(config)
+}
 
 void GrokFetcher::fetch() {
-    m_cliPath = m_config->providerCredential(
-        QStringLiteral("xai"), QStringLiteral("cliPath"));
-    if (m_cliPath.isEmpty())
-        m_cliPath = QStringLiteral("/usr/local/bin/grok");
+    QString grokHome = qEnvironmentVariable("GROK_HOME").trimmed();
+    if (grokHome.isEmpty())
+        grokHome = QDir::homePath() + QStringLiteral("/.grok");
 
-    // Verify the CLI exists; fall back to PATH lookup
-    if (!QFileInfo::exists(m_cliPath)) {
-        const QString fromPath = QStandardPaths::findExecutable(QStringLiteral("grok"));
-        if (fromPath.isEmpty()) {
-            emit failed(id(),
-                QStringLiteral("grok CLI not found at %1").arg(m_cliPath));
-            return;
-        }
-        m_cliPath = fromPath;
+    const QString sessionsRoot = QDir(grokHome).filePath(
+        QStringLiteral("sessions"));
+    const QDateTime cutoff = QDateTime::currentDateTimeUtc().addDays(
+        -kLookbackDays);
+
+    int sessionCount = 0;
+    qint64 totalTokens = 0;
+    QDateTime lastSessionAt;
+    QHash<QString, int> modelCounts;
+
+    QDirIterator iterator(sessionsRoot, {QStringLiteral("signals.json")},
+                          QDir::Files, QDirIterator::Subdirectories);
+    while (iterator.hasNext()) {
+        const QString path = iterator.next();
+        const QFileInfo info = iterator.fileInfo();
+        const QDateTime modified = info.lastModified().toUTC();
+        if (!modified.isValid() || modified < cutoff)
+            continue;
+
+        QFile file(path);
+        if (!file.open(QIODevice::ReadOnly))
+            continue;
+        QJsonParseError error;
+        const QJsonDocument document = QJsonDocument::fromJson(
+            file.readAll(), &error);
+        if (error.error != QJsonParseError::NoError || !document.isObject())
+            continue;
+
+        const QJsonObject root = document.object();
+        ++sessionCount;
+        totalTokens += static_cast<qint64>(root.value(
+            QStringLiteral("totalTokensBeforeCompaction")).toDouble());
+        totalTokens += static_cast<qint64>(root.value(
+            QStringLiteral("contextTokensUsed")).toDouble());
+
+        if (!lastSessionAt.isValid() || modified > lastSessionAt)
+            lastSessionAt = modified;
+
+        countModel(modelCounts, root.value(
+            QStringLiteral("primaryModelId")).toString());
+        const QJsonArray models = root.value(
+            QStringLiteral("modelsUsed")).toArray();
+        for (const QJsonValue& value : models)
+            countModel(modelCounts, value.toString());
     }
 
-    auto* process = new QProcess(this);
-    process->setProcessChannelMode(QProcess::MergedChannels);
-
-    connect(process, &QProcess::finished, this,
-        [this, process](int exitCode, QProcess::ExitStatus) {
-            onProcessFinished(exitCode, process);
-        });
-    connect(process, &QProcess::errorOccurred, this,
-        [this, process](QProcess::ProcessError err) {
-            if (err == QProcess::FailedToStart) {
-                emit failed(id(),
-                    QStringLiteral("Cannot start grok CLI: %1")
-                        .arg(process->errorString()));
-                process->deleteLater();
-            }
-        });
-
-    // 10-second timeout
-    QTimer::singleShot(10000, process, [this, process]() {
-        if (process->state() != QProcess::NotRunning) {
-            process->kill();
-            emit failed(id(), QStringLiteral("grok CLI timed out"));
-        }
-    });
-
-    QStringList args;
-    args << QStringLiteral("usage") << QStringLiteral("--json");
-    process->start(m_cliPath, args);
-}
-
-void GrokFetcher::onProcessFinished(int exitCode, QProcess* process) {
-    process->deleteLater();
-
-    if (exitCode != 0) {
-        const QString stderr = QString::fromUtf8(process->readAllStandardError());
-        emit failed(id(),
-            QStringLiteral("grok exited %1: %2").arg(exitCode).arg(stderr.trimmed()));
+    if (sessionCount == 0) {
+        emit failed(id(), QStringLiteral(
+            "Usage data not available for xAI (Grok): the CLI exposes no "
+            "billing API and no local session data was found"));
         return;
     }
 
-    const QByteArray raw = process->readAllStandardOutput();
-    parseOutput(QString::fromUtf8(raw));
-}
-
-void GrokFetcher::parseOutput(const QString& output) {
-    const QString trimmed = output.trimmed();
-
-    // Try JSON first
-    QJsonParseError parseError;
-    const QJsonDocument doc = QJsonDocument::fromJson(trimmed.toUtf8(), &parseError);
-    if (parseError.error == QJsonParseError::NoError && doc.isObject()) {
-        parseJsonOutput(trimmed.toUtf8());
-        return;
+    QString primaryModel;
+    int primaryModelCount = -1;
+    for (auto it = modelCounts.constBegin(); it != modelCounts.constEnd(); ++it) {
+        if (it.value() > primaryModelCount) {
+            primaryModel = it.key();
+            primaryModelCount = it.value();
+        }
     }
-
-    // Fall back to text pattern matching
-    parseTextOutput(trimmed);
-}
-
-void GrokFetcher::parseJsonOutput(const QByteArray& raw) {
-    const QJsonDocument doc = QJsonDocument::fromJson(raw);
-    const QJsonObject root = doc.object();
 
     ProviderQuota quota;
     quota.id = id();
     quota.displayName = displayName();
+    quota.planName = primaryModel.isEmpty()
+        ? QStringLiteral("Local activity (not quota)")
+        : QStringLiteral("Local activity · %1").arg(primaryModel);
 
-    const QString plan = root.value(QStringLiteral("plan")).toString();
-    if (!plan.isEmpty())
-        quota.planName = plan;
-
-    const QJsonObject usage = root.value(QStringLiteral("usage")).toObject();
-    const qint64 tokens = static_cast<qint64>(usage.value(QStringLiteral("tokens")).toDouble());
-    const qint64 limit  = static_cast<qint64>(usage.value(QStringLiteral("limit")).toDouble());
-
-    ProviderWindow w;
-    w.label = QStringLiteral("plan");
-    w.tokensUsed = tokens;
-    w.tokensLimit = limit;
-    if (limit > 0)
-        w.usedFraction =
-            qBound(0.0, static_cast<double>(tokens) /
-                            static_cast<double>(limit),
-                   1.0);
-
-    const QString resetStr = usage.value(QStringLiteral("reset_at")).toString();
-    if (!resetStr.isEmpty())
-        w.resetsAt = QDateTime::fromString(resetStr, Qt::ISODate);
-
-    quota.windows.append(w);
-    emit done(quota);
-}
-
-void GrokFetcher::parseTextOutput(const QString& text) {
-    // Try patterns like "tokens: 150000", "usage: 150000/500000", "150k/500k"
-    static QRegularExpression reTokens(
-        QStringLiteral(R"(tokens?\s*[:=]\s*(\d+))"),
-        QRegularExpression::CaseInsensitiveOption);
-    static QRegularExpression reUsage(
-        QStringLiteral(R"(usage\s*[:=]\s*(\d+)\s*/\s*(\d+))"),
-        QRegularExpression::CaseInsensitiveOption);
-    static QRegularExpression reKFormat(
-        QStringLiteral(R"((\d+(?:\.\d+)?)\s*[kK]\s*/\s*(\d+(?:\.\d+)?)\s*[kK])"));
-
-    ProviderQuota quota;
-    quota.id = id();
-    quota.displayName = displayName();
-    quota.planName = QStringLiteral("CLI");
-
-    qint64 used = 0, limit = 0;
-
-    auto mUsage = reUsage.match(text);
-    if (mUsage.hasMatch()) {
-        used  = mUsage.captured(1).toLongLong();
-        limit = mUsage.captured(2).toLongLong();
-    } else {
-        auto mK = reKFormat.match(text);
-        if (mK.hasMatch()) {
-            used  = static_cast<qint64>(mK.captured(1).toDouble() * 1000);
-            limit = static_cast<qint64>(mK.captured(2).toDouble() * 1000);
-        } else {
-            auto mTokens = reTokens.match(text);
-            if (mTokens.hasMatch())
-                used = mTokens.captured(1).toLongLong();
-        }
-    }
-
-    if (used == 0 && limit == 0) {
-        emit failed(id(), QStringLiteral("Could not parse grok output"));
-        return;
-    }
-
-    ProviderWindow w;
-    w.label = QStringLiteral("plan");
-    w.tokensUsed = used;
-    w.tokensLimit = limit;
-    if (limit > 0)
-        w.usedFraction =
-            qBound(0.0, static_cast<double>(used) /
-                            static_cast<double>(limit),
-                   1.0);
-
-    quota.windows.append(w);
+    ProviderWindow window;
+    window.label = QStringLiteral("30d local");
+    window.tokensUsed = totalTokens;
+    window.usedFraction = -1.0;
+    quota.windows.append(window);
     emit done(quota);
 }

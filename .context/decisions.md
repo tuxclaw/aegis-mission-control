@@ -1,5 +1,12 @@
 # Decisions
 
+## [2026-07-18] Provider Usage Sources Follow Subscription Auth Surfaces
+**By:** Helen 🦸‍♀️
+**Context:** The initial quota port called nonexistent or legacy billing endpoints and used inference probes as quota checks.
+**Decision:** Use Claude and Codex subscription OAuth usage endpoints, Gemini CLI OAuth quota when available, Grok local session accounting when the CLI billing RPC is unavailable, and explicit data-unavailable errors for auth modes without a supported quota surface. Keep Xiaomi MiMo on its browser-cookie platform endpoints with normalized manual cookie input.
+**Alternatives considered:** Legacy OpenAI dashboard billing endpoints, Anthropic `/v1/usage`, Grok `usage` CLI command, and Gemini `generateContent` probes; all are unsupported or do not represent subscription quota.
+**Status:** Active
+
 ## [2026-07-18] Backdrop Glass Uses Sibling Scene Capture
 **By:** Tux + Dash ⚡
 **Context:** Real blur requires `ShaderEffectSource` to capture content behind a surface without capturing itself or an ancestor.

@@ -15,7 +15,7 @@ public:
     void    fetch()             override;
 
 private:
-    void fetchCreditGrants();
+    void fetchOAuthUsage(const QString& accessToken, const QString& accountId);
 
     const MonitorConfig* m_config;
 };

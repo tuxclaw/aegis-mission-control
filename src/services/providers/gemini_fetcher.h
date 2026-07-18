@@ -15,7 +15,9 @@ public:
     void    fetch()             override;
 
 private:
-    void onReplyFinished(QNetworkReply* reply);
+    void fetchCodeAssist(const QString& accessToken);
+    void fetchQuota(const QString& accessToken, const QString& projectId,
+                    const QString& planName);
 
     const MonitorConfig* m_config;
 };

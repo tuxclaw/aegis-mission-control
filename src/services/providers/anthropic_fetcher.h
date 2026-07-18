@@ -15,7 +15,7 @@ public:
     void    fetch()             override;
 
 private:
-    void fetchWithToken(const QString& token, bool isAdmin);
+    void fetchOAuthUsage(const QString& token, const QString& planName);
 
     const MonitorConfig* m_config;
 };
