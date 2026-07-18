@@ -359,12 +359,12 @@ Item {
                     enterDelay: 4 * Motion.stagger
                     Layout.fillWidth: true
                     Layout.minimumWidth: Theme.splitPaneMinimumWidth
-                    Layout.preferredHeight: Math.max(Theme.contentMinimumHeight, diskList.contentHeight + Theme.cardPadding * 2)
+                    Layout.preferredHeight: diskList.contentHeight + Theme.cardPadding * 2
 
                     ListView {
                         id: diskList
                         width: parent.width
-                        height: Math.max(Theme.contentMinimumHeight - Theme.cardPadding * 2, contentHeight)
+                        height: contentHeight
                         model: vitals.diskModel
                         spacing: Theme.space.lg
                         boundsBehavior: Flickable.StopAtBounds
@@ -440,13 +440,13 @@ Item {
                     enterDelay: 5 * Motion.stagger
                     Layout.fillWidth: true
                     Layout.minimumWidth: Theme.splitPaneMinimumWidth
-                    Layout.preferredHeight: Math.max(Theme.contentMinimumHeight, fleetList.contentHeight + Theme.cardPadding * 2)
+                    Layout.preferredHeight: fleetList.contentHeight + Theme.cardPadding * 2
                     interactive: true
 
                     ListView {
                         id: fleetList
                         width: parent.width
-                        height: Math.max(Theme.contentMinimumHeight - Theme.cardPadding * 2, contentHeight)
+                        height: contentHeight
                         model: Agents.items
                         spacing: Theme.space.sm
                         boundsBehavior: Flickable.StopAtBounds
