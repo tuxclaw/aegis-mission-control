@@ -159,7 +159,7 @@ ApplicationWindow {
                 x: scene.width * 0.04
                 y: -height * 0.28
                 color: "#00d4ff"
-                opacity: 0.18
+                opacity: 0.3
 
                 SequentialAnimation on x {
                     loops: Animation.Infinite
@@ -183,7 +183,7 @@ ApplicationWindow {
                 x: scene.width * 0.62
                 y: scene.height * 0.1
                 color: "#0891b2"
-                opacity: 0.2
+                opacity: 0.3
 
                 SequentialAnimation on y {
                     loops: Animation.Infinite
@@ -207,7 +207,7 @@ ApplicationWindow {
                 x: scene.width * 0.2
                 y: scene.height * 0.62
                 color: "#22e39a"
-                opacity: 0.15
+                opacity: 0.3
 
                 SequentialAnimation on x {
                     loops: Animation.Infinite
@@ -230,8 +230,8 @@ ApplicationWindow {
                 radius: width / 2
                 x: scene.width * 0.72
                 y: scene.height * 0.7
-                color: "#00d4ff"
-                opacity: 0.15
+                color: "#9b5cff"
+                opacity: 0.3
 
                 SequentialAnimation on y {
                     loops: Animation.Infinite

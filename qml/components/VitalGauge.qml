@@ -8,6 +8,8 @@ Item {
     property string label: ""
     property real value: Number.NaN
     property string unit: "%"
+    property string valueText: ""
+    property string unavailableText: qsTr("n/a")
     property string subtext: ""
     property color accentColor: Theme.accent
     property bool available: true
@@ -120,7 +122,7 @@ Item {
 
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: root.hasValue ? Math.round(root.animatedValue) + root.unit : qsTr("n/a")
+                text: root.valueText.length > 0 ? root.valueText : root.hasValue ? Math.round(root.animatedValue) + root.unit : root.unavailableText
                 color: root.hasValue ? Theme.textPrimary : Theme.textMuted
                 font.family: Typography.display.family
                 font.pixelSize: Typography.display.pixelSize

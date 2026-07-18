@@ -48,9 +48,7 @@ Item {
     function formatRate(bytes) {
         if (bytes >= 1024 * 1024)
             return qsTr("%1 MB/s").arg((bytes / (1024 * 1024)).toFixed(1));
-        if (bytes >= 1024)
-            return qsTr("%1 KB/s").arg((bytes / 1024).toFixed(1));
-        return qsTr("%1 B/s").arg(Math.round(bytes));
+        return qsTr("%1 KB/s").arg((bytes / 1024).toFixed(1));
     }
 
     function hasFiniteValue(value) {
@@ -85,6 +83,13 @@ Item {
                         backdrop: root.backdrop
                         liveTracking: true
                         required property int index
+                        readonly property real gpuUtilization: Stats.gpuBusy * 100
+                        readonly property bool gpuIdle: !root.hasFiniteValue(gpuUtilization) || gpuUtilization <= 0.1
+                        readonly property real netRx: root.hasFiniteValue(Stats.netRx) ? Math.max(0, Stats.netRx) : 0
+                        readonly property real netTx: root.hasFiniteValue(Stats.netTx) ? Math.max(0, Stats.netTx) : 0
+                        readonly property real totalThroughput: netRx + netTx
+                        readonly property bool networkAvailable: netRx > 0 || netTx > 0
+                        readonly property real networkGaugeValue: totalThroughput >= 1024 * 1024 ? totalThroughput / (1024 * 1024) : totalThroughput / 1024
                         enterDelay: index * Motion.stagger
                         Layout.fillWidth: true
                         Layout.minimumWidth: Theme.minimumCardWidth
@@ -93,9 +98,12 @@ Item {
                         VitalGauge {
                             anchors.horizontalCenter: parent.horizontalCenter
                             label: vitalCard.index === 0 ? qsTr("CPU") : vitalCard.index === 1 ? qsTr("GPU") : vitalCard.index === 2 ? qsTr("Memory") : qsTr("Network")
-                            value: vitalCard.index === 0 ? Stats.cpuUsage * 100 : vitalCard.index === 1 ? Stats.gpuBusy * 100 : vitalCard.index === 2 && Stats.memTotalGiB > 0 ? Stats.memUsedGiB / Stats.memTotalGiB * 100 : Number.NaN
-                            available: vitalCard.index !== 2 || Stats.memTotalGiB > 0
-                            subtext: vitalCard.index === 1 && Stats.gpuTemp > 0 ? qsTr("%1 °C").arg(Stats.gpuTemp.toFixed(1)) : vitalCard.index === 2 ? qsTr("%1 / %2").arg(Stats.memUsedGiB.toFixed(1) + " GiB").arg(Stats.memTotalGiB.toFixed(1) + " GiB") : vitalCard.index === 3 ? qsTr("live throughput") : vitalCard.index === 0 ? qsTr("system load") : ""
+                            value: vitalCard.index === 0 ? Stats.cpuUsage * 100 : vitalCard.index === 1 ? vitalCard.gpuIdle ? Stats.gpuTemp : vitalCard.gpuUtilization : vitalCard.index === 2 && Stats.memTotalGiB > 0 ? Stats.memUsedGiB / Stats.memTotalGiB * 100 : vitalCard.networkGaugeValue
+                            valueText: vitalCard.index === 1 && vitalCard.gpuIdle && root.hasFiniteValue(Stats.gpuTemp) ? Stats.gpuTemp.toFixed(0) + "°C" : vitalCard.index === 3 && vitalCard.networkAvailable ? root.formatRate(vitalCard.totalThroughput) : ""
+                            unit: vitalCard.index === 1 && vitalCard.gpuIdle ? "°C" : vitalCard.index === 3 ? vitalCard.totalThroughput >= 1024 * 1024 ? " MB/s" : " KB/s" : "%"
+                            available: vitalCard.index === 1 ? vitalCard.gpuIdle ? root.hasFiniteValue(Stats.gpuTemp) : root.hasFiniteValue(vitalCard.gpuUtilization) : vitalCard.index === 2 ? Stats.memTotalGiB > 0 : vitalCard.index === 3 ? vitalCard.networkAvailable : true
+                            unavailableText: vitalCard.index === 3 ? qsTr("idle") : qsTr("n/a")
+                            subtext: vitalCard.index === 1 ? vitalCard.gpuIdle ? qsTr("idle") : root.hasFiniteValue(Stats.gpuTemp) ? Stats.gpuTemp.toFixed(0) + "°C" : "" : vitalCard.index === 2 ? qsTr("%1 / %2").arg(Stats.memUsedGiB.toFixed(1) + " GiB").arg(Stats.memTotalGiB.toFixed(1) + " GiB") : vitalCard.index === 3 ? vitalCard.networkAvailable ? qsTr("↑ %1 ↓ %2").arg(root.formatRate(vitalCard.netTx)).arg(root.formatRate(vitalCard.netRx)) : "" : vitalCard.index === 0 ? qsTr("system load") : ""
                             accentColor: vitalCard.index === 2 ? Theme.ok : Theme.accent
                         }
 
@@ -113,7 +121,7 @@ Item {
                                 font.weight: Typography.dataSmall.weight
                             }
                             Text {
-                                text: qsTr("↑ %1  ↓ %2").arg(root.formatRate(Stats.netTx)).arg(root.formatRate(Stats.netRx))
+                                text: qsTr("↑ %1  ↓ %2").arg(root.formatRate(vitalCard.netTx)).arg(root.formatRate(vitalCard.netRx))
                                 color: Theme.textSecondary
                                 font.family: Typography.dataSmall.family
                                 font.pixelSize: Typography.dataSmall.pixelSize

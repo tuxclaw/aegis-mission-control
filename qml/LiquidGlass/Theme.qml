@@ -19,10 +19,10 @@ QtObject {
 
     // ---- Glass material ----
     readonly property color glassTint:        "#0d1424"
-    readonly property real  glassTintOpacity: 0.85
+    readonly property real  glassTintOpacity: 0.55
     readonly property color glassBorder:      Qt.rgba(0, 212 / 255, 1, 0.18)
-    readonly property real  glassBlur:        1.0         // 0..1
-    readonly property int   glassBlurMax:     48          // px kernel ceiling
+    readonly property real  glassBlur:        0.85        // 0..1
+    readonly property int   glassBlurMax:     64          // px kernel ceiling
     readonly property real  glassSaturation:  0.3         // subtle vibrancy boost
 
     // ---- Radii ----
