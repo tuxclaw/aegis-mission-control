@@ -320,7 +320,8 @@ void SettingsController::resetDefaults() {
   openclawCliOutputCap_ = 4194304;
   dataRoot_ = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
   memoryRoots_ = {{QStringLiteral("workspace"),
-                   QDir::current().absoluteFilePath(QStringLiteral("memory"))}};
+                   QDir::home().absoluteFilePath(
+                       QStringLiteral(".openclaw/workspace/memory"))}};
   memoryMaxFileBytes_ = 5242880;
   gitRepoPath_.clear();
   gitRemoteName_ = QStringLiteral("origin");

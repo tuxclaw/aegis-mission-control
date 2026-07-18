@@ -9,7 +9,6 @@
 #include "controllers/agent_controller.h"
 #include "controllers/app_controller.h"
 #include "controllers/calendar_controller.h"
-#include "controllers/creative_controller.h"
 #include "controllers/cron_controller.h"
 #include "controllers/git_controller.h"
 #include "controllers/memory_controller.h"
@@ -18,7 +17,6 @@
 #include "controllers/settings_controller.h"
 #include "controllers/vitals_controller.h"
 #include "services/calendar_store.h"
-#include "services/creative_service.h"
 #include "services/cron_service.h"
 #include "services/gateway_service.h"
 #include "services/git_service.h"
@@ -64,8 +62,6 @@ class AppContext {
   [[nodiscard]] PackageController* packageController() const;
   // Returns the git controller.
   [[nodiscard]] GitController* gitController() const;
-  // Returns the creative controller.
-  [[nodiscard]] CreativeController* creativeController() const;
   // Returns the settings controller.
   [[nodiscard]] SettingsController* settingsController() const;
 
@@ -82,7 +78,6 @@ class AppContext {
   std::unique_ptr<ModelService> modelService_;
   std::unique_ptr<PackageService> packageService_;
   std::unique_ptr<GitService> gitService_;
-  std::unique_ptr<CreativeService> creativeService_;
   std::unique_ptr<AppController> appController_;
   std::unique_ptr<AgentController> agentController_;
   std::unique_ptr<VitalsController> vitalsController_;
@@ -92,7 +87,6 @@ class AppContext {
   std::unique_ptr<ModelController> modelController_;
   std::unique_ptr<PackageController> packageController_;
   std::unique_ptr<GitController> gitController_;
-  std::unique_ptr<CreativeController> creativeController_;
   std::unique_ptr<SettingsController> settingsController_;
 };
 

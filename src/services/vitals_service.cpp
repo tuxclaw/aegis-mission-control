@@ -2,6 +2,7 @@
 
 #include <sys/statvfs.h>
 
+#include <cerrno>
 #include <cmath>
 
 #include <QDir>
@@ -79,18 +80,45 @@ double readNumber(const QString& path, double scale = 1.0) {
 
 dto::GpuVitals readGpu() {
   const QDir drm(QStringLiteral("/sys/class/drm"));
-  const auto cards = drm.entryList({QStringLiteral("card[0-9]*")}, QDir::Dirs);
+  const auto cards = drm.entryList({QStringLiteral("card[0-9]*")},
+                                   QDir::Dirs | QDir::NoDotAndDotDot);
   for (const auto& card : cards) {
     const auto base = drm.filePath(card + QStringLiteral("/device"));
     const auto busyPath = QDir(base).filePath(QStringLiteral("gpu_busy_percent"));
     if (QFileInfo::exists(busyPath)) {
-      return {true, QStringLiteral("amd"), readNumber(busyPath), 0.0, 0.0,
-              readNumber(QDir(base).filePath(
-                             QStringLiteral("hwmon/hwmon0/temp1_input")),
-                         1000.0)};
+      const auto utilizationPct = readNumber(busyPath);
+      qCDebug(aegisVitalsLog) << "GPU utilization probe" << busyPath
+                              << utilizationPct;
+      if (std::isfinite(utilizationPct) && utilizationPct >= 0.0 &&
+          utilizationPct <= 100.0) {
+        return {true, QStringLiteral("amd"), utilizationPct, 0.0, 0.0,
+                readNumber(QDir(base).filePath(
+                               QStringLiteral("hwmon/hwmon0/temp1_input")),
+                           1000.0)};
+      }
     }
   }
+  qCDebug(aegisVitalsLog) << "GPU utilization unavailable in DRM sysfs";
   return {};
+}
+
+Result<dto::DiskVitals> readRootDisk() {
+  struct statvfs diskInfo {};
+  if (statvfs("/", &diskInfo) != 0) {
+    const auto errorNumber = errno;
+    qCWarning(aegisVitalsLog)
+        << "statvfs failed for /" << errorNumber
+        << qt_error_string(errorNumber);
+    return tl::unexpected(makeError(ErrorCode::PathNotFound,
+                                    QStringLiteral("disk statistics unavailable")));
+  }
+  const auto fragmentSize = static_cast<quint64>(diskInfo.f_frsize);
+  const auto total = static_cast<quint64>(diskInfo.f_blocks) * fragmentSize;
+  const auto free = static_cast<quint64>(diskInfo.f_bfree) * fragmentSize;
+  const auto used = total >= free ? total - free : 0;
+  qCDebug(aegisVitalsLog) << "statvfs /" << "total" << total << "used"
+                          << used;
+  return dto::DiskVitals{QStringLiteral("/"), total, used};
 }
 
 Result<dto::MemVitals> readMemory() {
@@ -194,19 +222,14 @@ void VitalsService::sampleNow() {
     if (!memory) return tl::unexpected(memory.error());
     const auto network = readNetworkCounters();
     if (!network) return tl::unexpected(network.error());
+    const auto disk = readRootDisk();
+    if (!disk) return tl::unexpected(disk.error());
     const auto now = QDateTime::currentDateTimeUtc();
     dto::VitalsDto sample;
     sample.sampledAt = now;
     sample.mem = memory.value();
     sample.gpu = readGpu();
-    struct statvfs diskInfo {};
-    if (statvfs("/", &diskInfo) == 0) {
-      const auto total = static_cast<quint64>(diskInfo.f_blocks) *
-                         static_cast<quint64>(diskInfo.f_frsize);
-      const auto available = static_cast<quint64>(diskInfo.f_bavail) *
-                             static_cast<quint64>(diskInfo.f_frsize);
-      sample.disks.append({QStringLiteral("/"), total, total - available});
-    }
+    sample.disks.append(disk.value());
     QFile loadFile(QStringLiteral("/proc/loadavg"));
     if (loadFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
       bool ok = false;

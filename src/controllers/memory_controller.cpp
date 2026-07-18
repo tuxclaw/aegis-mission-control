@@ -1,5 +1,7 @@
 #include "controllers/memory_controller.h"
 
+#include <QTimer>
+
 #include <utility>
 
 #include "services/memory_service.h"
@@ -10,6 +12,7 @@ MemoryController::MemoryController(MemoryService* service, QObject* parent)
     : QObject(parent), service_(service), files_(this) {
   const auto ids = rootIds();
   if (!ids.isEmpty()) currentRoot_ = ids.first();
+  QTimer::singleShot(0, this, &MemoryController::refresh);
 }
 
 MemoryFileModel* MemoryController::files() { return &files_; }

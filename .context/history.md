@@ -1,5 +1,24 @@
 # Build History
 
+## [2026-07-17] Memory, Disk, GPU, and Creative Backend Fixes
+**Agent:** Helen 🦸‍♀️
+**Branch:** `main` (explicit task requirement)
+
+- Pointed the default and reset memory allowlist at the OpenClaw workspace,
+  loaded memory on controller startup, and added filesystem diagnostics plus
+  service/controller regression coverage.
+- Made root-disk sampling fail visibly instead of silently returning an empty
+  model, reported real total/used bytes, and added `statvfs` diagnostics.
+- Hardened AMD DRM utilization probing to skip invalid card readings while
+  preserving the muted `n/a` fallback when no usable sysfs value exists.
+- Removed Creative service/controller construction and QML context exposure
+  while retaining their sources and focused tests for future reuse.
+- Verified a warnings-as-errors GUI build, all 10 QtTest suites, QML lint, and
+  an offscreen runtime trace with 106 memory files, one root disk, and live AMD
+  GPU utilization.
+
+**Status:** Complete
+
 ## [2026-07-17] UI Polish
 **Agent:** Dash ⚡
 **Branch:** `main` (explicit task requirement)

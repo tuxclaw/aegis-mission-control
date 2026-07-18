@@ -7,6 +7,7 @@
 
 #include "config/config_service.h"
 #include "core/async.h"
+#include "core/logging.h"
 #include "core/path_guard.h"
 
 namespace aegis {
@@ -26,6 +27,8 @@ QFuture<Result<QVector<dto::MemoryFileDto>>> MemoryService::list(
       return tl::unexpected(makeError(ErrorCode::PathOutsideSandbox,
                                       QStringLiteral("memory root not allowlisted")));
     }
+    qCDebug(aegisFilesystemLog) << "Listing memory root" << rootId
+                                << roots->value(rootId);
     const auto guard = PathGuard::create(roots->value(rootId), cap.value());
     if (!guard) return tl::unexpected(guard.error());
     QVector<dto::MemoryFileDto> files;
@@ -47,6 +50,8 @@ QFuture<Result<QVector<dto::MemoryFileDto>>> MemoryService::list(
                                              const auto& right) {
       return left.relativePath < right.relativePath;
     });
+    qCDebug(aegisFilesystemLog) << "Memory list complete" << rootId
+                                << files.size();
     return files;
   });
 }

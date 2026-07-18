@@ -47,7 +47,8 @@ QString defaultDataRoot() {
 
 QVariantMap defaultMemoryRoots() {
   return {{QStringLiteral("workspace"),
-           QDir::current().absoluteFilePath(QStringLiteral("memory"))}};
+           QDir::home().absoluteFilePath(
+               QStringLiteral(".openclaw/workspace/memory"))}};
 }
 
 QStringList defaultPackageCommand() {

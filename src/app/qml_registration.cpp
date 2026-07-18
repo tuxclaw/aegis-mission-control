@@ -35,7 +35,6 @@ void QmlRegistration::registerContext(QQmlApplicationEngine* engine,
   root->setContextProperty(QStringLiteral("models"), context->modelController());
   root->setContextProperty(QStringLiteral("packages"), context->packageController());
   root->setContextProperty(QStringLiteral("git"), context->gitController());
-  root->setContextProperty(QStringLiteral("creative"), context->creativeController());
   root->setContextProperty(QStringLiteral("settings"), context->settingsController());
 }
 
