@@ -19,6 +19,8 @@ Item {
     function refreshView() {
         errorMessage = "";
         agents.refresh();
+        Containers.refresh();
+        Processes.refresh();
         app.refreshAll();
     }
 
@@ -52,6 +54,10 @@ Item {
 
     function hasFiniteValue(value) {
         return typeof value === "number" && Number.isFinite(value);
+    }
+
+    function formatPercent(value) {
+        return hasFiniteValue(value) ? qsTr("%1%").arg(Math.max(0, value).toFixed(1)) : qsTr("n/a");
     }
 
     Connections {
@@ -128,6 +134,216 @@ Item {
                                     font.weight: Typography.dataSmall.weight
                                 }
                             }
+                        }
+                    }
+                }
+            }
+
+            GridLayout {
+                Layout.fillWidth: true
+                columns: width >= Theme.minimumWindowWidth ? 2 : 1
+                columnSpacing: Theme.viewGutter
+                rowSpacing: Theme.viewGutter
+
+                GlassCard {
+                    title: qsTr("CONTAINERS")
+                    enterDelay: 6 * Motion.stagger
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: Theme.minimumCardWidth
+                    Layout.minimumHeight: Theme.contentMinimumHeight
+                    Layout.preferredHeight: Math.max(Theme.contentMinimumHeight, containerList.contentHeight + Theme.cardPadding * 2)
+
+                    ListView {
+                        id: containerList
+                        width: parent.width
+                        height: Math.max(Theme.contentMinimumHeight - Theme.cardPadding * 2, contentHeight)
+                        model: Containers.containers
+                        spacing: Theme.space.md
+                        boundsBehavior: Flickable.StopAtBounds
+                        clip: true
+
+                        delegate: RowLayout {
+                            id: containerRow
+                            required property string name
+                            required property string image
+                            required property string status
+                            required property string ports
+                            width: containerList.width
+                            spacing: Theme.space.md
+
+                            Rectangle {
+                                Layout.alignment: Qt.AlignVCenter
+                                implicitWidth: Theme.statusDotSize
+                                implicitHeight: Theme.statusDotSize
+                                radius: Theme.radiusPill
+                                color: containerRow.status.toLowerCase() === "running" ? Theme.ok : Theme.textMuted
+                            }
+
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: Theme.space.xs
+
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: containerRow.name
+                                    textFormat: Text.PlainText
+                                    color: Theme.textPrimary
+                                    elide: Text.ElideRight
+                                    font.family: Typography.heading.family
+                                    font.pixelSize: Typography.heading.pixelSize
+                                    font.weight: Typography.heading.weight
+                                }
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: containerRow.image
+                                    textFormat: Text.PlainText
+                                    color: Theme.textSecondary
+                                    elide: Text.ElideMiddle
+                                    font.family: Typography.caption.family
+                                    font.pixelSize: Typography.caption.pixelSize
+                                    font.weight: Typography.caption.weight
+                                }
+                            }
+
+                            Text {
+                                Layout.preferredWidth: Theme.splitPaneMinimumWidth / 2
+                                visible: containerRow.ports.length > 0
+                                text: containerRow.ports
+                                textFormat: Text.PlainText
+                                color: Theme.textMuted
+                                horizontalAlignment: Text.AlignRight
+                                elide: Text.ElideMiddle
+                                font.family: Typography.dataSmall.family
+                                font.pixelSize: Typography.dataSmall.pixelSize
+                                font.weight: Typography.dataSmall.weight
+                            }
+                        }
+
+                        EmptyState {
+                            anchors.centerIn: parent
+                            visible: containerList.count === 0 && !Containers.loading
+                            title: qsTr("No containers found")
+                            detail: qsTr("Containers will appear here when they are available.")
+                        }
+
+                        LoadingState {
+                            anchors.fill: parent
+                            visible: Containers.loading
+                        }
+                    }
+                }
+
+                GlassCard {
+                    title: qsTr("PROCESSES")
+                    enterDelay: 7 * Motion.stagger
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: Theme.minimumCardWidth
+                    Layout.minimumHeight: Theme.contentMinimumHeight
+                    Layout.preferredHeight: Math.max(Theme.contentMinimumHeight, processList.contentHeight + Theme.cardPadding * 2)
+
+                    ListView {
+                        id: processList
+                        width: parent.width
+                        height: Math.max(Theme.contentMinimumHeight - Theme.cardPadding * 2, contentHeight)
+                        model: Processes.processes
+                        spacing: Theme.space.md
+                        boundsBehavior: Flickable.StopAtBounds
+                        clip: true
+
+                        delegate: RowLayout {
+                            id: processRow
+                            required property string name
+                            required property string user
+                            required property real cpuPct
+                            required property real memPct
+                            width: processList.width
+                            spacing: Theme.space.md
+
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: Theme.space.xs
+
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: processRow.name
+                                    textFormat: Text.PlainText
+                                    color: Theme.textPrimary
+                                    elide: Text.ElideRight
+                                    font.family: Typography.label.family
+                                    font.pixelSize: Typography.label.pixelSize
+                                    font.weight: Typography.label.weight
+                                }
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: processRow.user
+                                    textFormat: Text.PlainText
+                                    color: Theme.textSecondary
+                                    elide: Text.ElideRight
+                                    font.family: Typography.caption.family
+                                    font.pixelSize: Typography.caption.pixelSize
+                                    font.weight: Typography.caption.weight
+                                }
+                            }
+
+                            ColumnLayout {
+                                Layout.preferredWidth: Theme.tableActionWidth / 2
+                                spacing: Theme.space.xs
+
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: root.formatPercent(processRow.cpuPct)
+                                    color: !root.hasFiniteValue(processRow.cpuPct) ? Theme.textMuted : processRow.cpuPct > 50 ? Theme.alert : processRow.cpuPct > 25 ? Theme.warn : Theme.ok
+                                    horizontalAlignment: Text.AlignRight
+                                    font.family: Typography.data.family
+                                    font.pixelSize: Typography.data.pixelSize
+                                    font.weight: Typography.data.weight
+                                }
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: qsTr("CPU")
+                                    color: Theme.textMuted
+                                    horizontalAlignment: Text.AlignRight
+                                    font.family: Typography.caption.family
+                                    font.pixelSize: Typography.caption.pixelSize
+                                    font.weight: Typography.caption.weight
+                                }
+                            }
+
+                            ColumnLayout {
+                                Layout.preferredWidth: Theme.tableActionWidth / 2
+                                spacing: Theme.space.xs
+
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: root.formatPercent(processRow.memPct)
+                                    color: root.hasFiniteValue(processRow.memPct) ? Theme.textSecondary : Theme.textMuted
+                                    horizontalAlignment: Text.AlignRight
+                                    font.family: Typography.data.family
+                                    font.pixelSize: Typography.data.pixelSize
+                                    font.weight: Typography.data.weight
+                                }
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: qsTr("MEM")
+                                    color: Theme.textMuted
+                                    horizontalAlignment: Text.AlignRight
+                                    font.family: Typography.caption.family
+                                    font.pixelSize: Typography.caption.pixelSize
+                                    font.weight: Typography.caption.weight
+                                }
+                            }
+                        }
+
+                        EmptyState {
+                            anchors.centerIn: parent
+                            visible: processList.count === 0 && !Processes.loading
+                            title: qsTr("No processes found")
+                            detail: qsTr("Process activity will appear after the next refresh.")
+                        }
+
+                        LoadingState {
+                            anchors.fill: parent
+                            visible: Processes.loading
                         }
                     }
                 }
