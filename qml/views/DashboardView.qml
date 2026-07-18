@@ -60,13 +60,17 @@ Item {
     }
 
     ScrollView {
+        id: dashboardScroll
         anchors.fill: parent
         contentWidth: availableWidth
+        contentHeight: dashboardLayout.implicitHeight + bottomPadding
+        bottomPadding: Theme.statusBarHeight
         clip: true
         Component.onCompleted: contentItem["boundsBehavior"] = Flickable.StopAtBounds
 
         ColumnLayout {
-            width: parent.width
+            id: dashboardLayout
+            width: dashboardScroll.availableWidth
             spacing: Theme.viewGutter
 
             GridLayout {
@@ -93,7 +97,7 @@ Item {
                         enterDelay: index * Motion.stagger
                         Layout.fillWidth: true
                         Layout.minimumWidth: Theme.minimumCardWidth
-                        Layout.preferredHeight: Theme.gaugeSize + Theme.skeletonRowHeight + Theme.cardPadding * 3
+                        Layout.preferredHeight: Theme.gaugeSize + Theme.skeletonRowHeight + Theme.cardPadding * 2
 
                         VitalGauge {
                             anchors.horizontalCenter: parent.horizontalCenter
@@ -107,27 +111,6 @@ Item {
                             accentColor: vitalCard.index === 2 ? Theme.ok : Theme.accent
                         }
 
-                        RowLayout {
-                            width: parent.width
-                            height: vitalCard.index === 3 ? Theme.skeletonRowHeight : 0
-                            visible: vitalCard.index === 3
-                            Text {
-                                Layout.fillWidth: true
-                                text: qsTr("aggregate")
-                                color: Theme.textMuted
-                                elide: Text.ElideRight
-                                font.family: Typography.dataSmall.family
-                                font.pixelSize: Typography.dataSmall.pixelSize
-                                font.weight: Typography.dataSmall.weight
-                            }
-                            Text {
-                                text: qsTr("↑ %1  ↓ %2").arg(root.formatRate(vitalCard.netTx)).arg(root.formatRate(vitalCard.netRx))
-                                color: Theme.textSecondary
-                                font.family: Typography.dataSmall.family
-                                font.pixelSize: Typography.dataSmall.pixelSize
-                                font.weight: Typography.dataSmall.weight
-                            }
-                        }
                     }
                 }
             }
@@ -144,8 +127,10 @@ Item {
                     liveTracking: true
                     enterDelay: 6 * Motion.stagger
                     Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignTop
                     Layout.minimumWidth: Theme.minimumCardWidth
                     Layout.minimumHeight: Theme.contentMinimumHeight
+                    Layout.maximumHeight: Theme.contentMinimumHeight * 2
                     Layout.preferredHeight: Math.min(Theme.contentMinimumHeight * 2, Math.max(Theme.contentMinimumHeight, containerList.contentHeight + Theme.cardPadding * 2))
                     clip: true
 
@@ -203,13 +188,13 @@ Item {
                             }
 
                             Text {
-                                Layout.preferredWidth: Theme.splitPaneMinimumWidth / 2
+                                Layout.preferredWidth: Theme.splitPaneMinimumWidth * 0.75
                                 visible: containerRow.statusText.length > 0
                                 text: containerRow.statusText
                                 textFormat: Text.PlainText
                                 color: Theme.textMuted
                                 horizontalAlignment: Text.AlignRight
-                                elide: Text.ElideMiddle
+                                elide: Text.ElideRight
                                 font.family: Typography.dataSmall.family
                                 font.pixelSize: Typography.dataSmall.pixelSize
                                 font.weight: Typography.dataSmall.weight
@@ -236,15 +221,51 @@ Item {
                     liveTracking: true
                     enterDelay: 7 * Motion.stagger
                     Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignTop
                     Layout.minimumWidth: Theme.minimumCardWidth
                     Layout.minimumHeight: Theme.contentMinimumHeight
-                    Layout.preferredHeight: Math.min(Theme.contentMinimumHeight * 2, Math.max(Theme.contentMinimumHeight, processList.contentHeight + Theme.cardPadding * 2))
+                    Layout.maximumHeight: Theme.contentMinimumHeight * 2
+                    Layout.preferredHeight: Math.min(Theme.contentMinimumHeight * 2, Math.max(Theme.contentMinimumHeight, processHeader.height + Theme.space.md + processList.contentHeight + Theme.cardPadding * 2))
                     clip: true
+
+                    RowLayout {
+                        id: processHeader
+                        width: parent.width
+                        height: Theme.tableHeaderHeight
+                        spacing: Theme.space.md
+
+                        Text {
+                            Layout.fillWidth: true
+                            text: qsTr("Name")
+                            color: Theme.textMuted
+                            font.family: Typography.caption.family
+                            font.pixelSize: Typography.caption.pixelSize
+                            font.weight: Typography.caption.weight
+                        }
+                        Text {
+                            Layout.preferredWidth: Theme.tableActionWidth
+                            text: qsTr("CPU")
+                            color: Theme.textMuted
+                            horizontalAlignment: Text.AlignRight
+                            font.family: Typography.caption.family
+                            font.pixelSize: Typography.caption.pixelSize
+                            font.weight: Typography.caption.weight
+                        }
+                        Text {
+                            Layout.preferredWidth: Theme.tableActionWidth
+                            text: qsTr("MEM")
+                            color: Theme.textMuted
+                            horizontalAlignment: Text.AlignRight
+                            font.family: Typography.caption.family
+                            font.pixelSize: Typography.caption.pixelSize
+                            font.weight: Typography.caption.weight
+                        }
+                    }
 
                     ListView {
                         id: processList
                         width: parent.width
-                        height: Math.min(parent.height - Theme.cardPadding * 2, Math.max(Theme.contentMinimumHeight - Theme.cardPadding * 2, contentHeight))
+                        height: Math.min(parent.height - processHeader.height - Theme.space.md - Theme.cardPadding * 2, Math.max(Theme.contentMinimumHeight - processHeader.height - Theme.space.md - Theme.cardPadding * 2, contentHeight))
                         model: Stats.topProcesses
                         spacing: Theme.space.md
                         boundsBehavior: Flickable.StopAtBounds
@@ -253,85 +274,41 @@ Item {
                         delegate: RowLayout {
                             id: processRow
                             required property var modelData
-                            readonly property int processPid: Number(modelData.pid || 0)
                             readonly property string processName: String(modelData.name || "")
                             readonly property real processCpu: Number(modelData.cpu || 0)
                             readonly property real processMemMiB: Number(modelData.memMiB || 0)
                             width: processList.width
                             spacing: Theme.space.md
 
-                            ColumnLayout {
+                            Text {
                                 Layout.fillWidth: true
-                                spacing: Theme.space.xs
-
-                                Text {
-                                    Layout.fillWidth: true
-                                    text: processRow.processName
-                                    textFormat: Text.PlainText
-                                    color: Theme.textPrimary
-                                    elide: Text.ElideRight
-                                    font.family: Typography.label.family
-                                    font.pixelSize: Typography.label.pixelSize
-                                    font.weight: Typography.label.weight
-                                }
-                                Text {
-                                    Layout.fillWidth: true
-                                    text: qsTr("PID %1").arg(processRow.processPid)
-                                    textFormat: Text.PlainText
-                                    color: Theme.textSecondary
-                                    elide: Text.ElideRight
-                                    font.family: Typography.caption.family
-                                    font.pixelSize: Typography.caption.pixelSize
-                                    font.weight: Typography.caption.weight
-                                }
+                                text: processRow.processName
+                                textFormat: Text.PlainText
+                                color: Theme.textPrimary
+                                elide: Text.ElideRight
+                                font.family: Typography.label.family
+                                font.pixelSize: Typography.label.pixelSize
+                                font.weight: Typography.label.weight
                             }
 
-                            ColumnLayout {
-                                Layout.preferredWidth: Theme.tableActionWidth / 2
-                                spacing: Theme.space.xs
-
-                                Text {
-                                    Layout.fillWidth: true
-                                    text: root.formatPercent(processRow.processCpu * 100)
-                                    color: !root.hasFiniteValue(processRow.processCpu) ? Theme.textMuted : processRow.processCpu > 0.5 ? Theme.alert : processRow.processCpu > 0.25 ? Theme.warn : Theme.ok
-                                    horizontalAlignment: Text.AlignRight
-                                    font.family: Typography.data.family
-                                    font.pixelSize: Typography.data.pixelSize
-                                    font.weight: Typography.data.weight
-                                }
-                                Text {
-                                    Layout.fillWidth: true
-                                    text: qsTr("CPU")
-                                    color: Theme.textMuted
-                                    horizontalAlignment: Text.AlignRight
-                                    font.family: Typography.caption.family
-                                    font.pixelSize: Typography.caption.pixelSize
-                                    font.weight: Typography.caption.weight
-                                }
+                            Text {
+                                Layout.preferredWidth: Theme.tableActionWidth
+                                text: root.formatPercent(processRow.processCpu * 100)
+                                color: !root.hasFiniteValue(processRow.processCpu) ? Theme.textMuted : processRow.processCpu > 0.5 ? Theme.alert : processRow.processCpu > 0.25 ? Theme.warn : Theme.ok
+                                horizontalAlignment: Text.AlignRight
+                                font.family: Typography.data.family
+                                font.pixelSize: Typography.data.pixelSize
+                                font.weight: Typography.data.weight
                             }
 
-                            ColumnLayout {
-                                Layout.preferredWidth: Theme.tableActionWidth / 2
-                                spacing: Theme.space.xs
-
-                                Text {
-                                    Layout.fillWidth: true
-                                    text: root.hasFiniteValue(processRow.processMemMiB) ? qsTr("%1 MiB").arg(processRow.processMemMiB.toFixed(1)) : qsTr("n/a")
-                                    color: root.hasFiniteValue(processRow.processMemMiB) ? Theme.textSecondary : Theme.textMuted
-                                    horizontalAlignment: Text.AlignRight
-                                    font.family: Typography.data.family
-                                    font.pixelSize: Typography.data.pixelSize
-                                    font.weight: Typography.data.weight
-                                }
-                                Text {
-                                    Layout.fillWidth: true
-                                    text: qsTr("MEM")
-                                    color: Theme.textMuted
-                                    horizontalAlignment: Text.AlignRight
-                                    font.family: Typography.caption.family
-                                    font.pixelSize: Typography.caption.pixelSize
-                                    font.weight: Typography.caption.weight
-                                }
+                            Text {
+                                Layout.preferredWidth: Theme.tableActionWidth
+                                text: root.hasFiniteValue(processRow.processMemMiB) ? qsTr("%1 MiB").arg(processRow.processMemMiB.toFixed(1)) : qsTr("n/a")
+                                color: root.hasFiniteValue(processRow.processMemMiB) ? Theme.textSecondary : Theme.textMuted
+                                horizontalAlignment: Text.AlignRight
+                                font.family: Typography.data.family
+                                font.pixelSize: Typography.data.pixelSize
+                                font.weight: Typography.data.weight
                             }
                         }
 
@@ -358,14 +335,17 @@ Item {
                     liveTracking: true
                     enterDelay: 4 * Motion.stagger
                     Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignTop
                     Layout.minimumWidth: Theme.splitPaneMinimumWidth
                     Layout.minimumHeight: Theme.cardPadding * 2 + Theme.skeletonRowHeight
-                    Layout.preferredHeight: Math.max(Theme.cardPadding * 2 + Theme.skeletonRowHeight, diskList.contentHeight + Theme.cardPadding * 2)
+                    Layout.maximumHeight: Theme.contentMinimumHeight * 2
+                    Layout.preferredHeight: Math.min(Theme.contentMinimumHeight * 2, Math.max(Theme.cardPadding * 2 + Theme.skeletonRowHeight, diskList.contentHeight + Theme.cardPadding * 2))
+                    clip: true
 
                     ListView {
                         id: diskList
                         width: parent.width
-                        height: Math.max(Theme.skeletonRowHeight, contentHeight)
+                        height: Math.min(parent.height - Theme.cardPadding * 2, Math.max(Theme.skeletonRowHeight, contentHeight))
                         model: vitals.diskModel
                         spacing: Theme.space.lg
                         boundsBehavior: Flickable.StopAtBounds
@@ -440,15 +420,18 @@ Item {
                     liveTracking: true
                     enterDelay: 5 * Motion.stagger
                     Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignTop
                     Layout.minimumWidth: Theme.splitPaneMinimumWidth
                     Layout.minimumHeight: Theme.cardPadding * 2 + Theme.skeletonRowHeight
-                    Layout.preferredHeight: Math.max(Theme.cardPadding * 2 + Theme.skeletonRowHeight, fleetList.contentHeight + Theme.cardPadding * 2)
+                    Layout.maximumHeight: Theme.contentMinimumHeight * 2
+                    Layout.preferredHeight: Math.min(Theme.contentMinimumHeight * 2, Math.max(Theme.cardPadding * 2 + Theme.skeletonRowHeight, fleetList.contentHeight + Theme.cardPadding * 2))
                     interactive: true
+                    clip: true
 
                     ListView {
                         id: fleetList
                         width: parent.width
-                        height: Math.max(Theme.skeletonRowHeight, contentHeight)
+                        height: Math.min(parent.height - Theme.cardPadding * 2, Math.max(Theme.skeletonRowHeight, contentHeight))
                         model: Agents.items
                         spacing: Theme.space.sm
                         boundsBehavior: Flickable.StopAtBounds
@@ -486,10 +469,11 @@ Item {
                                 font.weight: Typography.caption.weight
                             }
                             Text {
-                                Layout.preferredWidth: Theme.splitPaneMinimumWidth / 3
+                                Layout.fillWidth: true
+                                Layout.preferredWidth: Theme.splitPaneMinimumWidth / 2
                                 text: agentRow.agentModel.length > 0 ? agentRow.agentModel : qsTr("n/a")
                                 color: Theme.textSecondary
-                                elide: Text.ElideMiddle
+                                elide: Text.ElideRight
                                 font.family: Typography.dataSmall.family
                                 font.pixelSize: Typography.dataSmall.pixelSize
                                 font.weight: Typography.dataSmall.weight
