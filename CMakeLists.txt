@@ -10,7 +10,7 @@ set(CMAKE_AUTORCC ON)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-find_package(Qt6 6.6 REQUIRED COMPONENTS Core Concurrent Network)
+find_package(Qt6 6.6 REQUIRED COMPONENTS Core Concurrent Network Sql)
 find_package(Qt6Keychain REQUIRED)
 find_package(unofficial-libgit2 CONFIG QUIET)
 if(TARGET unofficial::libgit2::libgit2 AND NOT TARGET Libgit2::Libgit2)

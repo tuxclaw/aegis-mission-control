@@ -8,6 +8,7 @@
 #include "dto/enums.h"
 #include "models/container_list_model.h"
 #include "models/process_list_model.h"
+#include "models/usage_list_model.h"
 
 namespace aegis {
 
@@ -29,6 +30,9 @@ void QmlRegistration::registerTypes() {
   qmlRegisterUncreatableType<ProcessListModel>(
       "Aegis", 1, 0, "ProcessListModel",
       QStringLiteral("Process models are owned by Processes"));
+  qmlRegisterUncreatableType<UsageListModel>(
+      "Aegis", 1, 0, "UsageListModel",
+      QStringLiteral("Usage models are managed by Usage"));
 }
 
 void QmlRegistration::registerContext(QQmlApplicationEngine* engine,
@@ -37,6 +41,8 @@ void QmlRegistration::registerContext(QQmlApplicationEngine* engine,
                                context->containerController());
   qmlRegisterSingletonInstance("Aegis", 1, 0, "Processes",
                                context->processController());
+  qmlRegisterSingletonInstance("Aegis", 1, 0, "Usage",
+                               context->usageController());
   auto* root = engine->rootContext();
   root->setContextProperty(QStringLiteral("app"), context->appController());
   root->setContextProperty(QStringLiteral("agents"), context->agentController());

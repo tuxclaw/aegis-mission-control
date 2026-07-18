@@ -9,7 +9,24 @@
 - Added the Usage chart icon and registered the new view and icon in the QML/resource manifests.
 - Verified QML parsing, XML/SVG validation, a successful GUI build, and all 12 QtTest executables. The offscreen smoke test reaches the new view but awaits the parallel backend singleton registration before it can resolve `Usage`.
 
-**Status:** Frontend complete; backend integration pending
+**Status:** Complete; backend integration is recorded below
+
+## [2026-07-18] Provider Quota Tracking Backend
+**Agent:** Helen 🦸‍♀️
+**Branch:** `main` (explicit task requirement)
+
+- Ported the provider quota DTO, fetcher base, manager, eight provider
+  fetchers, and legacy monitor configuration adapter from openclaw-monitor.
+- Added the QML-facing usage controller and list model, including provider,
+  window, balance, plan, error, and fetch-time fields.
+- Wired provider usage through AppContext and registered the `Usage` singleton
+  expected by the Usage view without modifying QML.
+- Added Qt Network/SQL build integration for HTTP requests and read-only
+  Firefox cookie lookup.
+- Verified a warnings-as-errors GUI build, all 12 QtTest executables, and an
+  offscreen smoke test with no usage singleton or QML load errors.
+
+**Status:** Complete
 
 ## [2026-07-18] Liquid Glass UI Integration
 **Agent:** Dash ⚡

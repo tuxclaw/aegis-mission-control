@@ -40,6 +40,7 @@ set(AEGIS_CORE_SOURCES
   dto/package_dto.h
   dto/process_dto.cpp
   dto/process_dto.h
+  dto/provider_quota.h
   dto/vitals_dto.cpp
   dto/vitals_dto.h
   controllers/agent_controller.cpp
@@ -66,6 +67,8 @@ set(AEGIS_CORE_SOURCES
   controllers/process_controller.h
   controllers/settings_controller.cpp
   controllers/settings_controller.h
+  controllers/usage_controller.cpp
+  controllers/usage_controller.h
   controllers/vitals_controller.cpp
   controllers/vitals_controller.h
   models/agent_list_model.cpp
@@ -86,6 +89,8 @@ set(AEGIS_CORE_SOURCES
   models/package_list_model.h
   models/process_list_model.cpp
   models/process_list_model.h
+  models/usage_list_model.cpp
+  models/usage_list_model.h
   services/calendar_store.cpp
   services/calendar_store.h
   services/container_service.cpp
@@ -102,12 +107,34 @@ set(AEGIS_CORE_SOURCES
   services/memory_service.h
   services/model_service.cpp
   services/model_service.h
+  services/monitor_config.cpp
+  services/monitor_config.h
   services/openclaw_cli.cpp
   services/openclaw_cli.h
   services/package_service.cpp
   services/package_service.h
   services/process_service.cpp
   services/process_service.h
+  services/i_provider_fetcher.cpp
+  services/i_provider_fetcher.h
+  services/provider_manager.cpp
+  services/provider_manager.h
+  services/providers/anthropic_fetcher.cpp
+  services/providers/anthropic_fetcher.h
+  services/providers/codexbar_fetcher.cpp
+  services/providers/codexbar_fetcher.h
+  services/providers/gemini_fetcher.cpp
+  services/providers/gemini_fetcher.h
+  services/providers/grok_fetcher.cpp
+  services/providers/grok_fetcher.h
+  services/providers/minimax_fetcher.cpp
+  services/providers/minimax_fetcher.h
+  services/providers/openai_fetcher.cpp
+  services/providers/openai_fetcher.h
+  services/providers/xiaomi_fetcher.cpp
+  services/providers/xiaomi_fetcher.h
+  services/providers/zai_fetcher.cpp
+  services/providers/zai_fetcher.h
   services/vitals_service.cpp
   services/vitals_service.h
 )
@@ -119,7 +146,7 @@ target_include_directories(aegis_core
     "${PROJECT_SOURCE_DIR}/third_party"
 )
 target_link_libraries(aegis_core
-  PUBLIC Qt6::Core Qt6::Concurrent Qt6::Network
+  PUBLIC Qt6::Core Qt6::Concurrent Qt6::Network Qt6::Sql
 )
 
 target_link_libraries(aegis_core PRIVATE Libgit2::Libgit2)

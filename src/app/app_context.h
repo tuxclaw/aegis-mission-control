@@ -17,6 +17,7 @@
 #include "controllers/package_controller.h"
 #include "controllers/process_controller.h"
 #include "controllers/settings_controller.h"
+#include "controllers/usage_controller.h"
 #include "controllers/vitals_controller.h"
 #include "services/calendar_store.h"
 #include "services/container_service.h"
@@ -25,9 +26,11 @@
 #include "services/git_service.h"
 #include "services/memory_service.h"
 #include "services/model_service.h"
+#include "services/monitor_config.h"
 #include "services/openclaw_cli.h"
 #include "services/package_service.h"
 #include "services/process_service.h"
+#include "services/provider_manager.h"
 #include "services/vitals_service.h"
 
 namespace aegis {
@@ -72,11 +75,15 @@ class AppContext {
   [[nodiscard]] GitController* gitController() const;
   // Returns the settings controller.
   [[nodiscard]] SettingsController* settingsController() const;
+  // Returns the provider-usage controller.
+  [[nodiscard]] UsageController* usageController() const;
 
  private:
   std::unique_ptr<ConfigService> configService_;
   std::unique_ptr<SecretStore> secretStore_;
   std::unique_ptr<HttpClient> httpClient_;
+  std::unique_ptr<MonitorConfig> monitorConfig_;
+  std::unique_ptr<ProviderManager> providerManager_;
   std::unique_ptr<GatewayService> gatewayService_;
   std::unique_ptr<OpenClawCli> openClawCli_;
   std::unique_ptr<VitalsService> vitalsService_;
@@ -100,6 +107,7 @@ class AppContext {
   std::unique_ptr<PackageController> packageController_;
   std::unique_ptr<GitController> gitController_;
   std::unique_ptr<SettingsController> settingsController_;
+  std::unique_ptr<UsageController> usageController_;
 };
 
 }  // namespace aegis

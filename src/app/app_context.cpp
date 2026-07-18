@@ -17,6 +17,8 @@ AppContext::AppContext()
     : configService_(std::make_unique<ConfigService>()),
       secretStore_(std::make_unique<SecretStore>()),
       httpClient_(std::make_unique<HttpClient>()),
+      monitorConfig_(std::make_unique<MonitorConfig>()),
+      providerManager_(std::make_unique<ProviderManager>(monitorConfig_.get())),
       gatewayService_(std::make_unique<GatewayService>(
           secretStore_.get(), configService_.get(), httpClient_.get())),
       openClawCli_(std::make_unique<OpenClawCli>(configService_.get())),
@@ -45,7 +47,9 @@ AppContext::AppContext()
       gitController_(std::make_unique<GitController>(gitService_.get(),
                                                      configService_.get())),
       settingsController_(std::make_unique<SettingsController>(
-          configService_.get(), secretStore_.get())) {
+          configService_.get(), secretStore_.get())),
+      usageController_(
+          std::make_unique<UsageController>(providerManager_.get())) {
   async::configureGlobalThreadPool();
 
   const auto checkGateway = [this] {
@@ -107,6 +111,8 @@ AppContext::AppContext()
                    packageController_.get(), &PackageController::refresh);
   QObject::connect(appController_.get(), &AppController::refreshAllRequested,
                    gitController_.get(), &GitController::refresh);
+  QObject::connect(appController_.get(), &AppController::refreshAllRequested,
+                   usageController_.get(), &UsageController::refresh);
   QObject::connect(agentController_.get(), &AgentController::refreshed,
                    appController_.get(), &AppController::markSynced);
   QObject::connect(settingsController_.get(),
@@ -152,5 +158,6 @@ ModelController* AppContext::modelController() const { return modelController_.g
 PackageController* AppContext::packageController() const { return packageController_.get(); }
 GitController* AppContext::gitController() const { return gitController_.get(); }
 SettingsController* AppContext::settingsController() const { return settingsController_.get(); }
+UsageController* AppContext::usageController() const { return usageController_.get(); }
 
 }  // namespace aegis
