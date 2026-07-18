@@ -1,21 +1,23 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Effects
+import LiquidGlass as LG
 import "../theme"
 
-Item {
+LG.GlassCard {
     id: root
 
     default property alias contentItem: contentColumn.data
-    property string title: ""
     property int padding: Theme.cardPadding
     property bool interactive: false
     property int enterDelay: 0
     readonly property bool hovered: interactive && hoverHandler.hovered
 
+    contentPadding: padding
+    radius: Theme.radiusCard
+    brightness: hovered ? 0.08 : 0
     implicitWidth: Theme.minimumCardWidth
-    implicitHeight: padding * 2 + (header.visible ? header.implicitHeight + Theme.space.md : 0) + contentColumn.implicitHeight
+    implicitHeight: padding * 2 + (title.length > 0 ? LG.Theme.fontSizeSmall + Theme.space.md : 0) + contentColumn.implicitHeight
     opacity: 0
 
     transform: Translate {
@@ -23,79 +25,23 @@ Item {
         y: Theme.enterOffset
     }
 
-    Rectangle {
-        id: glowSurface
-        anchors.fill: parent
-        color: Theme.transparent
-        radius: Theme.radiusCard
-        border.width: Theme.borderWidth
-        border.color: Theme.panelGlow
-        opacity: root.hovered ? 1 : 0.55
-        layer.enabled: true
-        layer.effect: MultiEffect {
-            blurEnabled: true
-            blur: 1
-            blurMax: Theme.glowBlur
-        }
-
-        Behavior on opacity {
-            NumberAnimation {
-                duration: Motion.reduceMotion ? Motion.instant : Theme.interactiveDuration
-                easing.type: Motion.fastEasing
-            }
-        }
-    }
-
-    Rectangle {
-        id: surface
-        anchors.fill: parent
-        color: Theme.panel
-        radius: Theme.radiusCard
-        border.width: Theme.borderWidth
-        border.color: root.hovered ? Theme.accent : Theme.panelBorder
-        layer.enabled: true
-        layer.effect: MultiEffect {
-            shadowEnabled: true
-            shadowColor: Theme.shadow
-            shadowBlur: 1
-            blurMax: Theme.cardShadowBlur
-            shadowVerticalOffset: Theme.cardShadowY
-        }
-
-        Behavior on border.color {
-            ColorAnimation {
-                duration: Motion.reduceMotion ? Motion.instant : Theme.interactiveDuration
-                easing.type: Motion.fastEasing
-            }
-        }
-    }
-
     Column {
         id: contentColumn
-        anchors {
-            fill: parent
-            margins: root.padding
-        }
+        anchors.fill: parent
         spacing: Theme.space.md
-
-        Text {
-            id: header
-            width: parent.width
-            visible: root.title.length > 0
-            text: root.title
-            color: Theme.textPrimary
-            font.family: Typography.heading.family
-            font.pixelSize: Typography.heading.pixelSize
-            font.weight: Typography.heading.weight
-            font.letterSpacing: Typography.heading.letterSpacing
-            elide: Text.ElideRight
-        }
     }
 
     HoverHandler {
         id: hoverHandler
         enabled: root.interactive
         cursorShape: root.interactive ? Qt.PointingHandCursor : Qt.ArrowCursor
+    }
+
+    Behavior on brightness {
+        NumberAnimation {
+            duration: Motion.reduceMotion ? Motion.instant : Theme.interactiveDuration
+            easing.type: Motion.fastEasing
+        }
     }
 
     ParallelAnimation {

@@ -9,6 +9,7 @@ import "../components"
 Item {
     id: root
 
+    property Item backdrop: null
     property string errorMessage: ""
     property bool retryable: false
 
@@ -47,6 +48,7 @@ Item {
         }
 
         GlassCard {
+            backdrop: root.backdrop
             Layout.fillWidth: true
             Layout.fillHeight: true
             padding: 0

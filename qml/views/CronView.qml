@@ -9,6 +9,7 @@ import "../components"
 Item {
     id: root
 
+    property Item backdrop: null
     property string errorMessage: ""
     property bool retryable: false
     property string pendingJobId: ""
@@ -43,6 +44,7 @@ Item {
     }
 
     GlassCard {
+        backdrop: root.backdrop
         anchors.fill: parent
         padding: 0
 

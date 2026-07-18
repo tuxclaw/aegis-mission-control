@@ -1,5 +1,11 @@
 # Decisions
 
+## [2026-07-18] Backdrop Glass Uses Sibling Scene Capture
+**By:** Tux + Dash ⚡
+**Context:** Real blur requires `ShaderEffectSource` to capture content behind a surface without capturing itself or an ancestor.
+**Decision:** Keep all background visuals in a root-level `scene` item and all controls in a sibling `uiLayer`; pass the scene reference through each view to LiquidGlass surfaces, with live tracking only for moving or scrolling cards.
+**Status:** Active
+
 ## [2026-07-17] Full Rebrand: AO → AEGIS
 **By:** Tux + Jeff 🛡️
 **Context:** Complete rebuild/rebrand of Andy's Overview Tauri app. Old app had 6 BLOCKER security findings.

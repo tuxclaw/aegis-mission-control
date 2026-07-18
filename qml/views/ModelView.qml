@@ -9,6 +9,7 @@ import "../components"
 Item {
     id: root
 
+    property Item backdrop: null
     property string errorMessage: ""
     property bool retryable: false
     property string pendingModelId: ""
@@ -46,6 +47,7 @@ Item {
         spacing: Theme.viewGutter
 
         GlassCard {
+            backdrop: root.backdrop
             Layout.fillWidth: true
             Layout.preferredHeight: Theme.tableHeaderHeight + Theme.cardPadding * 2
 
@@ -110,6 +112,8 @@ Item {
                 }
 
                 GlassCard {
+                    backdrop: root.backdrop
+                    liveTracking: true
                     anchors {
                         fill: parent
                         margins: modelCell.activeCard ? Theme.borderWidth : 0

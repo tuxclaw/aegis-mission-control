@@ -1,5 +1,16 @@
 # Build History
 
+## [2026-07-18] Liquid Glass UI Integration
+**Agent:** Dash ⚡
+**Branch:** `main` (explicit task requirement)
+
+- Bundled the QML LiquidGlass module and retuned its material tokens to the AEGIS Midnight Command palette.
+- Split the window into sibling `scene` and `uiLayer` items so every glass surface captures only the gradient, aurora, and radar backdrop without render recursion.
+- Replaced the sidebar, status bar, and shared card surface with real blurred glass; passed the scene reference through all nine views and enabled live capture on moving cards.
+- Verified a warnings-as-errors GUI build, all 12 QtTest executables, QML format/lint parsing, and an offscreen runtime smoke test.
+
+**Status:** Complete
+
 ## [2026-07-18] Container and Process Monitoring Backend
 **Agent:** Helen 🦸‍♀️
 **Branch:** `main` (explicit task requirement)

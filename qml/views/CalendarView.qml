@@ -9,6 +9,7 @@ import "../components"
 Item {
     id: root
 
+    property Item backdrop: null
     property date monthCursor: new Date()
     property date editorDate: new Date()
     property string selectedEventId: ""
@@ -178,6 +179,7 @@ Item {
         }
 
         GlassCard {
+            backdrop: root.backdrop
             Layout.fillWidth: true
             Layout.fillHeight: true
 
@@ -334,6 +336,8 @@ Item {
 
     GlassCard {
         id: editorDrawer
+        backdrop: root.backdrop
+        liveTracking: true
         anchors {
             top: parent.top
             bottom: parent.bottom

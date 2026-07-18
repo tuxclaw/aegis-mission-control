@@ -1,8 +1,9 @@
 import QtQuick
 import QtQuick.Layouts
+import LiquidGlass as LG
 import "../theme"
 
-Rectangle {
+LG.GlassSurface {
     id: root
 
     property string connectionState: "unknown"
@@ -17,9 +18,11 @@ Rectangle {
     readonly property color connectionColor: connectionState === "connected" ? Theme.ok : connectionState === "connecting" ? Theme.warn : connectionState === "disconnected" ? Theme.alert : Theme.textMuted
 
     implicitHeight: Theme.statusBarHeight
-    color: Theme.bgElevated
-    border.width: Theme.borderWidth
-    border.color: Theme.divider
+    radius: 0
+    dropShadow: false
+    sheen: false
+    tint: Theme.bgElevated
+    tintOpacity: 0.85
 
     onSyncSerialChanged: syncPulse.restart()
 

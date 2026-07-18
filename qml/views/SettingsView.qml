@@ -11,6 +11,7 @@ import "../components"
 Item {
     id: root
 
+    property Item backdrop: null
     property string errorMessage: ""
     property bool retryable: false
     property bool busy: false
@@ -160,6 +161,8 @@ Item {
 
             GlassCard {
                 title: qsTr("GATEWAY")
+                backdrop: root.backdrop
+                liveTracking: true
                 enterDelay: 0
                 Layout.fillWidth: true
 
@@ -221,6 +224,8 @@ Item {
 
             GlassCard {
                 title: qsTr("GIT")
+                backdrop: root.backdrop
+                liveTracking: true
                 enterDelay: Motion.stagger
                 Layout.fillWidth: true
 
@@ -299,6 +304,8 @@ Item {
 
             GlassCard {
                 title: qsTr("MEMORY ROOTS")
+                backdrop: root.backdrop
+                liveTracking: true
                 enterDelay: 2 * Motion.stagger
                 Layout.fillWidth: true
 
@@ -361,6 +368,8 @@ Item {
 
             GlassCard {
                 title: qsTr("SYSTEM & APPEARANCE")
+                backdrop: root.backdrop
+                liveTracking: true
                 enterDelay: 3 * Motion.stagger
                 Layout.fillWidth: true
 

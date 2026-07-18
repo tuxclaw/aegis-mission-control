@@ -10,6 +10,7 @@ import "../components"
 Item {
     id: root
 
+    property Item backdrop: null
     signal openAgentsRequested
 
     property string errorMessage: ""
@@ -89,6 +90,8 @@ Item {
 
                     GlassCard {
                         id: vitalCard
+                        backdrop: root.backdrop
+                        liveTracking: true
                         required property int index
                         enterDelay: index * Motion.stagger
                         Layout.fillWidth: true
@@ -147,6 +150,8 @@ Item {
 
                 GlassCard {
                     title: qsTr("CONTAINERS")
+                    backdrop: root.backdrop
+                    liveTracking: true
                     enterDelay: 6 * Motion.stagger
                     Layout.fillWidth: true
                     Layout.minimumWidth: Theme.minimumCardWidth
@@ -235,6 +240,8 @@ Item {
 
                 GlassCard {
                     title: qsTr("PROCESSES")
+                    backdrop: root.backdrop
+                    liveTracking: true
                     enterDelay: 7 * Motion.stagger
                     Layout.fillWidth: true
                     Layout.minimumWidth: Theme.minimumCardWidth
@@ -357,6 +364,8 @@ Item {
 
                 GlassCard {
                     title: qsTr("DISKS")
+                    backdrop: root.backdrop
+                    liveTracking: true
                     enterDelay: 4 * Motion.stagger
                     Layout.fillWidth: true
                     Layout.minimumWidth: Theme.splitPaneMinimumWidth
@@ -436,6 +445,8 @@ Item {
 
                 GlassCard {
                     title: qsTr("FLEET AT A GLANCE")
+                    backdrop: root.backdrop
+                    liveTracking: true
                     enterDelay: 5 * Motion.stagger
                     Layout.fillWidth: true
                     Layout.minimumWidth: Theme.splitPaneMinimumWidth

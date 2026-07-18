@@ -10,6 +10,7 @@ import "../components"
 Item {
     id: root
 
+    property Item backdrop: null
     signal openSettingsRequested
 
     property string selectedPath: ""
@@ -133,6 +134,7 @@ Item {
 
             GlassCard {
                 title: qsTr("CHANGES")
+                backdrop: root.backdrop
                 enterDelay: 0
                 Layout.preferredWidth: Math.max(Theme.splitPaneMinimumWidth, root.width * 0.42)
                 Layout.fillHeight: true
@@ -254,6 +256,7 @@ Item {
 
             GlassCard {
                 title: qsTr("DETAIL / COMMIT")
+                backdrop: root.backdrop
                 enterDelay: Motion.stagger
                 Layout.fillWidth: true
                 Layout.fillHeight: true

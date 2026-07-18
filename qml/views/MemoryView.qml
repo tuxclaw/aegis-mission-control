@@ -9,6 +9,7 @@ import "../components"
 Item {
     id: root
 
+    property Item backdrop: null
     property string errorMessage: ""
     property bool retryable: false
     property bool busy: false
@@ -92,6 +93,7 @@ Item {
 
             GlassCard {
                 title: qsTr("FILES")
+                backdrop: root.backdrop
                 enterDelay: 0
                 Layout.preferredWidth: Math.max(Theme.splitPaneMinimumWidth, root.width / 3)
                 Layout.fillHeight: true
@@ -185,6 +187,7 @@ Item {
             }
 
             GlassCard {
+                backdrop: root.backdrop
                 enterDelay: Motion.stagger
                 Layout.fillWidth: true
                 Layout.fillHeight: true

@@ -10,6 +10,7 @@ import "../components"
 Item {
     id: root
 
+    property Item backdrop: null
     property string errorMessage: ""
     property bool retryable: false
     property string expandedAgentId: ""
@@ -98,6 +99,8 @@ Item {
 
                 GlassCard {
                     anchors.fill: parent
+                    backdrop: root.backdrop
+                    liveTracking: true
                     enterDelay: index * Motion.stagger
                     interactive: true
 

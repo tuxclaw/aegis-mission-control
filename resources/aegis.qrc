@@ -2,6 +2,14 @@
   <qresource prefix="/qml">
     <file alias="qmldir">../qml/qmldir</file>
     <file alias="Main.qml">../qml/Main.qml</file>
+    <file alias="LiquidGlass/qmldir">../qml/LiquidGlass/qmldir</file>
+    <file alias="LiquidGlass/Theme.qml">../qml/LiquidGlass/Theme.qml</file>
+    <file alias="LiquidGlass/GlassSurface.qml">../qml/LiquidGlass/GlassSurface.qml</file>
+    <file alias="LiquidGlass/GlassCard.qml">../qml/LiquidGlass/GlassCard.qml</file>
+    <file alias="LiquidGlass/GlassButton.qml">../qml/LiquidGlass/GlassButton.qml</file>
+    <file alias="LiquidGlass/GlassSlider.qml">../qml/LiquidGlass/GlassSlider.qml</file>
+    <file alias="LiquidGlass/GlassToggle.qml">../qml/LiquidGlass/GlassToggle.qml</file>
+    <file alias="LiquidGlass/GlassTextField.qml">../qml/LiquidGlass/GlassTextField.qml</file>
     <file alias="theme/qmldir">../qml/theme/qmldir</file>
     <file alias="theme/Theme.qml">../qml/theme/Theme.qml</file>
     <file alias="theme/Typography.qml">../qml/theme/Typography.qml</file>
@@ -31,6 +39,16 @@
     <file alias="views/PackagesView.qml">../qml/views/PackagesView.qml</file>
     <file alias="views/GitView.qml">../qml/views/GitView.qml</file>
     <file alias="views/SettingsView.qml">../qml/views/SettingsView.qml</file>
+  </qresource>
+  <qresource prefix="/qt/qml">
+    <file alias="LiquidGlass/qmldir">../qml/LiquidGlass/qmldir</file>
+    <file alias="LiquidGlass/Theme.qml">../qml/LiquidGlass/Theme.qml</file>
+    <file alias="LiquidGlass/GlassSurface.qml">../qml/LiquidGlass/GlassSurface.qml</file>
+    <file alias="LiquidGlass/GlassCard.qml">../qml/LiquidGlass/GlassCard.qml</file>
+    <file alias="LiquidGlass/GlassButton.qml">../qml/LiquidGlass/GlassButton.qml</file>
+    <file alias="LiquidGlass/GlassSlider.qml">../qml/LiquidGlass/GlassSlider.qml</file>
+    <file alias="LiquidGlass/GlassToggle.qml">../qml/LiquidGlass/GlassToggle.qml</file>
+    <file alias="LiquidGlass/GlassTextField.qml">../qml/LiquidGlass/GlassTextField.qml</file>
   </qresource>
   <qresource prefix="/icons">
     <file alias="aegis.svg">icons/aegis.svg</file>
