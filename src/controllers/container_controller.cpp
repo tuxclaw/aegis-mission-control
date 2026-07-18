@@ -11,10 +11,18 @@ ContainerController::ContainerController(ContainerService* service,
           [this](const dto::ContainerDto& sample) {
             containers_.setItems(sample.containers);
             setLoading(false);
+            if (!available_) {
+              available_ = true;
+              emit availableChanged();
+            }
           });
   connect(service_, &ContainerService::failed, this,
           [this](const AegisError& error) {
             setLoading(false);
+            if (!available_) {
+              available_ = true;
+              emit availableChanged();
+            }
             emit errorRaised(error.userMessage, error.retryable);
             emit toast(error.userMessage, 3);
           });
@@ -23,6 +31,8 @@ ContainerController::ContainerController(ContainerService* service,
 ContainerListModel* ContainerController::containers() { return &containers_; }
 
 bool ContainerController::loading() const { return loading_; }
+
+bool ContainerController::available() const { return available_; }
 
 void ContainerController::refresh() {
   if (loading_) return;
