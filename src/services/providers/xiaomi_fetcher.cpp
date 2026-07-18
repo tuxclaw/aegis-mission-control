@@ -377,9 +377,14 @@ void XiaomiFetcher::onAllRepliesFinished() {
                     item.value(QStringLiteral("used")).toDouble());
                 w.tokensLimit = static_cast<qint64>(
                     item.value(QStringLiteral("limit")).toDouble());
-                w.usedFraction = qBound(
-                    0.0, item.value(QStringLiteral("percent")).toDouble() / 100.0,
-                    1.0);
+                const double pct = item.value(QStringLiteral("percent")).toDouble();
+                if (pct > 0.0) {
+                    w.usedFraction = qBound(0.0, pct / 100.0, 1.0);
+                } else if (w.tokensLimit > 0 && w.tokensUsed > 0) {
+                    w.usedFraction = qBound(0.0, static_cast<double>(w.tokensUsed) / static_cast<double>(w.tokensLimit), 1.0);
+                } else {
+                    w.usedFraction = 0.0;
+                }
                 // Copy resetsAt from the detail window if present
                 if (!quota.windows.isEmpty())
                     w.resetsAt = quota.windows.first().resetsAt;
