@@ -28,8 +28,16 @@ void AnthropicFetcher::fetch() {
     if (credFile.open(QIODevice::ReadOnly)) {
         const QJsonDocument doc =
             QJsonDocument::fromJson(credFile.readAll());
-        const QString oauthToken = doc.object().value(
-            QStringLiteral("claudeAiOauthToken")).toString();
+        const QJsonObject root = doc.object();
+        // Try nested format: {"claudeAiOauth": {"accessToken": "..."}}
+        const QJsonObject oauth = root.value(
+            QStringLiteral("claudeAiOauth")).toObject();
+        QString oauthToken = oauth.value(
+            QStringLiteral("accessToken")).toString();
+        // Fallback: flat format {"claudeAiOauthToken": "..."}
+        if (oauthToken.isEmpty())
+            oauthToken = root.value(
+                QStringLiteral("claudeAiOauthToken")).toString();
         if (!oauthToken.isEmpty()) {
             fetchWithToken(oauthToken, /*isAdmin=*/false);
             return;
