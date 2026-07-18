@@ -3,6 +3,10 @@
 #include <QDir>
 #include <QFontDatabase>
 #include <QGuiApplication>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QProcess>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QUrl>
@@ -34,12 +38,47 @@ int main(int argc, char* argv[]) {
   engine.addImportPath(QStringLiteral("qrc:/qt/qml"));
   aegis::QmlRegistration::registerContext(&engine, &appContext);
 
+  // Generate agents.json from OpenClaw CLI if no custom source is set.
+  const QString agentsPath = qEnvironmentVariable(
+      "AGENTS_SOURCE",
+      QDir::homePath() + QStringLiteral("/.openclaw/agents.json"));
+  if (!qEnvironmentVariableIsSet("AGENTS_SOURCE")) {
+    QProcess cli;
+    cli.start(QStringLiteral("openclaw"),
+              {QStringLiteral("agents"), QStringLiteral("list"),
+               QStringLiteral("--json")});
+    if (cli.waitForFinished(5000) && cli.exitCode() == 0) {
+      const QJsonDocument doc =
+          QJsonDocument::fromJson(cli.readAllStandardOutput());
+      if (doc.isArray()) {
+        QJsonArray out;
+        for (const auto& v : doc.array()) {
+          if (!v.isObject()) continue;
+          const auto obj = v.toObject();
+          QJsonObject entry;
+          entry[QStringLiteral("name")] =
+              obj.value(QStringLiteral("id")).toString();
+          entry[QStringLiteral("model")] =
+              obj.value(QStringLiteral("model")).toString();
+          entry[QStringLiteral("state")] =
+              obj.value(QStringLiteral("isDefault")).toBool()
+                  ? QStringLiteral("active")
+                  : QStringLiteral("idle");
+          entry[QStringLiteral("detail")] =
+              obj.value(QStringLiteral("identityName")).toString();
+          out.append(entry);
+        }
+        QFile f(agentsPath);
+        if (f.open(QIODevice::WriteOnly))
+          f.write(QJsonDocument(out).toJson());
+      }
+    }
+  }
+
   SystemStats stats;
   ContainerList containers;
   AgentRoster agents;
-  agents.setSource(qEnvironmentVariable(
-      "AGENTS_SOURCE",
-      QDir::homePath() + QStringLiteral("/.openclaw/agents.json")));
+  agents.setSource(agentsPath);
 
   engine.rootContext()->setContextProperty(QStringLiteral("Stats"), &stats);
   engine.rootContext()->setContextProperty(QStringLiteral("Containers"),
