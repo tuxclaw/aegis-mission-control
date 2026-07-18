@@ -13,7 +13,7 @@ Button {
     property bool destructive: false
     readonly property color actionColor: destructive ? Theme.alert : Theme.accent
 
-    implicitWidth: Math.max(Theme.buttonMinWidth, contentRow.implicitWidth + Theme.space.xl * 2)
+    implicitWidth: Math.max(Theme.buttonMinWidth, label.implicitWidth + (root.busy ? Theme.spinnerSize + Theme.space.sm : 0) + Theme.space.xl * 2)
     implicitHeight: Theme.buttonHeight
     enabled: !busy
     scale: down ? Theme.pressScale : 1
@@ -44,13 +44,27 @@ Button {
         }
     }
 
-    contentItem: Row {
+    contentItem: Item {
         id: contentRow
-        anchors.centerIn: parent
-        spacing: Theme.space.sm
+
+        Text {
+            id: label
+            anchors.centerIn: parent
+            text: root.busy ? qsTr("Working…") : root.text
+            color: Theme.bg
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            font.family: Typography.label.family
+            font.pixelSize: Typography.label.pixelSize
+            font.weight: Font.DemiBold
+            font.letterSpacing: Typography.label.letterSpacing
+        }
 
         Item {
             visible: root.busy
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.right: label.left
+            anchors.rightMargin: Theme.space.sm
             width: Theme.spinnerSize
             height: Theme.spinnerSize
 
@@ -78,15 +92,6 @@ Button {
                     running: root.busy && Motion.animationsEnabled
                 }
             }
-        }
-
-        Text {
-            text: root.busy ? qsTr("Working…") : root.text
-            color: Theme.bg
-            font.family: Typography.label.family
-            font.pixelSize: Typography.label.pixelSize
-            font.weight: Font.DemiBold
-            font.letterSpacing: Typography.label.letterSpacing
         }
     }
 
