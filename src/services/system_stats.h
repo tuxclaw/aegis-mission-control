@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QString>
 #include <QTimer>
+#include <QtNumeric>
 #include <QVariantList>
 #include <vector>
 
@@ -35,6 +36,7 @@ class SystemStats : public QObject
     Q_PROPERTY(double memTotalGiB READ memTotalGiB NOTIFY sampled)
     Q_PROPERTY(double netRx READ netRx NOTIFY sampled)              // bytes/s
     Q_PROPERTY(double netTx READ netTx NOTIFY sampled)              // bytes/s
+    Q_PROPERTY(bool netAvailable READ netAvailable NOTIFY sampled)
     // Top processes by CPU: list of {pid, name, cpu (fraction of one core), memMiB}
     Q_PROPERTY(QVariantList topProcesses READ topProcesses NOTIFY sampled)
     Q_PROPERTY(int processCount READ processCount NOTIFY sampled)
@@ -56,6 +58,7 @@ public:
     double memTotalGiB() const { return m_memTotalGiB; }
     double netRx() const { return m_netRx; }
     double netTx() const { return m_netTx; }
+    bool netAvailable() const { return m_netPrimed; }
     QVariantList topProcesses() const { return m_topProcesses; }
     int processCount() const { return m_processCount; }
     QString uptime() const { return m_uptime; }
@@ -92,6 +95,7 @@ private:
     qulonglong m_prevRxBytes = 0;
     qulonglong m_prevTxBytes = 0;
     qint64 m_prevNetStamp = 0;
+    bool m_netPrimed = false;
     QHash<int, qulonglong> m_prevProcTicks;
     qint64 m_prevProcStamp = 0;
     long m_hz = 100;
@@ -104,7 +108,7 @@ private:
     double m_cpuUsage = 0;
     QVariantList m_perCore;
     double m_cpuTemp = 0;
-    double m_gpuBusy = 0;
+    double m_gpuBusy = qQNaN();
     double m_gpuTemp = 0;
     double m_memUsedGiB = 0;
     double m_memTotalGiB = 0;

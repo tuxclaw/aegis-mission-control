@@ -158,8 +158,15 @@ void SystemStats::sampleTemps()
 
 void SystemStats::sampleGpu()
 {
-    if (!m_gpuBusyPath.isEmpty())
-        m_gpuBusy = readTrimmed(m_gpuBusyPath).toDouble() / 100.0;
+    const QString busy = readTrimmed(m_gpuBusyPath);
+    if (busy.isEmpty()) {
+        m_gpuBusy = qQNaN();
+        return;
+    }
+
+    bool ok = false;
+    const double percent = busy.toDouble(&ok);
+    m_gpuBusy = ok ? percent / 100.0 : qQNaN();
 }
 
 void SystemStats::sampleMemory()
@@ -208,7 +215,9 @@ void SystemStats::sampleNetwork()
     }
 
     const qint64 stamp = QDateTime::currentMSecsSinceEpoch();
-    if (m_prevNetStamp > 0 && stamp > m_prevNetStamp) {
+    if (!m_netPrimed) {
+        m_netPrimed = true;
+    } else if (stamp > m_prevNetStamp) {
         const double dt = double(stamp - m_prevNetStamp) / 1000.0;
         m_netRx = double(rx - m_prevRxBytes) / dt;
         m_netTx = double(tx - m_prevTxBytes) / dt;
