@@ -286,7 +286,8 @@ ApplicationWindow {
                 dropShadow: false
                 sheen: false
                 tint: Theme.bgElevated
-                tintOpacity: 0.85
+                tintOpacity: 0.92
+                bordered: true
                 clip: true
 
                 Behavior on animatedWidth {
@@ -412,12 +413,16 @@ ApplicationWindow {
                 Layout.fillHeight: true
                 spacing: 0
 
-                Rectangle {
+                LG.GlassSurface {
                     Layout.fillWidth: true
                     Layout.preferredHeight: Theme.topBarHeight
-                    color: Theme.bgElevated
-                    border.width: Theme.borderWidth
-                    border.color: Theme.divider
+                    backdrop: scene
+                    radius: 0
+                    dropShadow: false
+                    sheen: false
+                    tint: Theme.bgElevated
+                    tintOpacity: 0.92
+                    bordered: true
 
                     RowLayout {
                         anchors {

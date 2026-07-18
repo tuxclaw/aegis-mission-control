@@ -15,6 +15,7 @@ LG.GlassCard {
 
     contentPadding: padding
     radius: Theme.radiusCard
+    tintOpacity: 0.85
     brightness: hovered ? 0.08 : 0
     implicitWidth: Theme.minimumCardWidth
     implicitHeight: padding * 2 + (title.length > 0 ? LG.Theme.fontSizeSmall + Theme.space.md : 0) + contentColumn.implicitHeight

@@ -1,5 +1,15 @@
 # Build History
 
+## [2026-07-18] Liquid Glass Chrome Consistency
+**Agent:** Dash ⚡
+**Branch:** `main` (explicit task requirement)
+
+- Converted the title bar to a backdrop-blurred GlassSurface and standardized the sidebar and status bar as flush, shadowless chrome at 0.92 tint opacity.
+- Standardized shared content cards at 0.85 tint opacity and refined sidebar hover states with a translucent material tint and hairline border.
+- Verified QML formatting/parsing, a successful GUI build, all 12 QtTest suites, installed-artifact parity, and offscreen runtime smoke tests.
+
+**Status:** Complete
+
 ## [2026-07-18] Dashboard Layout Follow-up
 **Agent:** Dash ⚡
 **Branch:** `main` (explicit task requirement)

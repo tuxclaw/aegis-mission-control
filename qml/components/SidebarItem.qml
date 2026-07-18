@@ -34,9 +34,9 @@ ToolButton {
 
     background: Rectangle {
         radius: Theme.radiusControl
-        color: root.active || root.hovered ? Theme.accentSoft : Theme.transparent
-        border.width: root.activeFocus ? Theme.focusBorderWidth : 0
-        border.color: Theme.accent
+        color: root.active ? Theme.accentSoft : root.hovered ? Qt.rgba(13 / 255, 20 / 255, 36 / 255, 0.62) : Theme.transparent
+        border.width: root.activeFocus ? Theme.focusBorderWidth : root.active || root.hovered ? Theme.borderWidth : 0
+        border.color: root.activeFocus ? Theme.accent : Theme.panelBorder
 
         Rectangle {
             width: Theme.activeBarWidth

@@ -22,7 +22,8 @@ LG.GlassSurface {
     dropShadow: false
     sheen: false
     tint: Theme.bgElevated
-    tintOpacity: 0.85
+    tintOpacity: 0.92
+    bordered: true
 
     onSyncSerialChanged: syncPulse.restart()
 
